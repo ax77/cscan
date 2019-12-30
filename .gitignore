@@ -1,0 +1,10 @@
+*.o
+*.bak
+*.a
+*.exe
+*.log
+
+# cdt
+.settings/
+.cproject
+.project

@@ -1,0 +1,47 @@
+#ifndef CORE_LIST_H_
+#define CORE_LIST_H_
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stddef.h>
+#include <assert.h>
+#include <time.h>
+
+// simple, but fast double linked list, rewritten from JDK.
+// why [void*] instead of macros?
+// because is really horrible use macros for complete data structures.
+// yes, it safety to use typed structures, and it more clean in debugger
+// after the macro being substituted.
+// and you no need cast all time what you want get from link.
+// and you no need to write the comment for each list, about what this list contains.
+// but, and only but -> the usage of macros instead of code _MORE_ fragile
+// use macros is _UNSAFE_
+// you need tons of typedefs like: token_list, list_of_token_list, etc...
+// and before each use you need translate this typedef in mind...
+// with [void*] it more easy. you need cast, and only cast...
+
+struct linked_list {
+    struct list_node {
+        void *e;
+        struct list_node *prev;
+        struct list_node *next;
+    }*first, *last;
+    size_t size;
+};
+
+struct linked_list * list_new(void);
+struct list_node * list_node_new(struct list_node *prev, void *e,
+        struct list_node *next);
+struct list_node * list_get_node(struct linked_list *list, size_t index);
+
+int list_is_empty(struct linked_list *list);
+size_t list_size(struct linked_list *list);
+void list_push_front(struct linked_list *list, void *e);
+void list_push_back(struct linked_list *list, void *e);
+void * list_pop_front(struct linked_list *list);
+void * list_pop_back(struct linked_list *list);
+void * list_get(struct linked_list *list, size_t at_index);
+void * list_set(struct linked_list *list, size_t at_index, void *element);
+
+#endif /* CORE_LIST_H_ */
