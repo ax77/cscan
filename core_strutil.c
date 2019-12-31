@@ -102,6 +102,12 @@ void sb_adds(struct strbuilder *s, char *news) {
   }
 }
 
+struct strbuilder *sb_copy(struct strbuilder *what) {
+    struct strbuilder *res = sb_new();
+    sb_adds(res, what->str);
+    return res;
+}
+
 struct strbuilder *sb_left(struct strbuilder *from, size_t much) {
     assert(from && from->str);
 
@@ -112,8 +118,7 @@ struct strbuilder *sb_left(struct strbuilder *from, size_t much) {
     }
     // II) overflow, return full content of src
     if(much >= from->len) {
-        sb_adds(res, from->str);
-        return res;
+        return sb_copy(from);
     }
     // III) normal cases
     for(size_t i = 0; i < much; i++) {
@@ -132,8 +137,7 @@ struct strbuilder *sb_right(struct strbuilder *from, size_t much) {
     }
     // II) overflow, return full content of src
     if(much >= from->len) {
-        sb_adds(res, from->str);
-        return res;
+        return sb_copy(from);
     }
     //III) normal cases
     size_t start = from->len - much;
@@ -160,6 +164,37 @@ struct strbuilder *sb_mid(struct strbuilder *from, size_t begin, size_t much) {
         end = from->len;
     }
     for(size_t i = begin; i < end; i++) {
+        sb_addc(res, from->str[i]);
+    }
+    return res;
+}
+
+struct strbuilder *sb_trim(struct strbuilder *from) {
+    assert(from && from->str);
+    
+    struct strbuilder *res = sb_new();
+    if(from->len == 0) {
+        return res;
+    }
+    
+    size_t start = 0;
+    size_t end = 0;
+    
+    for(start = 0; start < from->len; start++) {
+        int c = from->str[start];
+        if(c > ' ') {
+            break;
+        }
+    }
+    
+    for(end = from->len; end != 0; end--) {
+        int c = from->str[end];
+        if(c > ' ') {
+            break;
+        }
+    }
+    
+    for(size_t i = start; i <= end; i++) {
         sb_addc(res, from->str[i]);
     }
     return res;

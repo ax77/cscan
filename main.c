@@ -213,6 +213,23 @@ void test_strmid_5() {
     axTEST(streq(res->str, "ing_102"));
 }
 
+void test_strtrim_0() {
+    struct strbuilder *buf = sb_new();
+    sb_adds(buf, "\n\n  string_1024 \n\n  \n\n\t \r\n\n ");  
+    
+    struct strbuilder *res = sb_trim(buf);
+    axTEST(streq(res->str, "string_1024"));
+}
+
+void test_strtrim_1() {
+    struct strbuilder *buf = sb_new();
+    sb_adds(buf, "string_1024");  
+    
+    struct strbuilder *res = sb_trim(buf);
+    axTEST(streq(res->str, "string_1024"));
+    printf("[%s]\n", res->str);
+}
+
 int main(void) {
 
     test_strstarts_1();
@@ -242,6 +259,8 @@ int main(void) {
     test_strmid_3();
     test_strmid_4();
     test_strmid_5();
+    test_strtrim_0();
+    test_strtrim_1() ;
 
 //  VALID_COMBINATIONS = HashMap_new_str();
 //
