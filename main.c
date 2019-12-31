@@ -5,13 +5,14 @@
 #include <assert.h>
 #include <time.h>
 
-
+#include "core_list.h"
 #include "core_buf.h"
 #include "token.h"
 #include "hashmap.h"
 #include "ident_hash.h"
 #include "core_strutil.h"
 #include "core_file.h"
+#include "core_mem.h"
 
 HashMap *VALID_COMBINATIONS;
 
@@ -91,7 +92,7 @@ int streq(char *s1, char *s2) {
 
 void test_pathnormalize_1() {
   struct strbuilder *s = pathnormalize("usr//local//include");
-  printf("%s\n", s->str);
+  //printf("%s\n", s->str);
   axTEST(streq(s->str, "usr/local/include"));
 }
 
@@ -227,10 +228,189 @@ void test_strtrim_1() {
     
     struct strbuilder *res = sb_trim(buf);
     axTEST(streq(res->str, "string_1024"));
-    printf("[%s]\n", res->str);
+    //printf("[%s]\n", res->str);
 }
 
+
+
+
+
+
+
+static size_t uid = 0;
+typedef struct mem_block {
+    size_t uid;
+    size_t size;
+    void *ptr;
+} MemBlock;
+
+MemBlock *MemBlock_new(size_t size) {
+    MemBlock *block = cc_malloc(sizeof(MemBlock));
+    block->size = size;
+    block->uid = uid++;
+    block->ptr = cc_malloc(size);
+    return block;
+}
+
+typedef struct memory_pool{
+    size_t size;
+    LinkedList *blocks;
+} MemoryPool;
+
+MemoryPool *MemoryPool_init() {
+    MemoryPool *pool = cc_malloc(sizeof(MemoryPool));
+    pool->size = 0;
+    pool->blocks = list_new();
+    return pool;
+}
+
+void *MemoryPool_get(MemoryPool *from, size_t much) {
+    MemBlock *block = MemBlock_new(much);
+    list_push_back(from->blocks, block);
+    from->size += much;
+    return block->ptr;
+}
+
+void MemoryPool_free(MemoryPool *where) {
+    while(!list_is_empty(where->blocks)) {
+        MemBlock *block = list_pop_front(where->blocks);
+        where->size -= block->size;
+        
+        free(block->ptr);
+        block->ptr = NULL;
+        
+        free(block);
+    }
+    // TODO: free pool itself?
+}
+
+void MemoryPool_info(MemoryPool *pool) {
+    assert(pool);
+    
+    for(ListNode *node = pool->blocks->first; node; node = node->next) {
+        MemBlock *block = node->e;
+        printf("uid=%-8lu; size=%-16lu; ptr=%p\n"
+            , block->uid
+            , block->size
+            , block->ptr
+        );
+    }
+    
+    printf("\n .total: byte=%lu; mb=%lu\n"
+        , pool->size
+        , pool->size / (1024*1024)
+    );
+}
+
+
+void test_pool_1() {
+    MemoryPool *pool = MemoryPool_init();
+    axTEST(pool->size==0 && pool->blocks);
+}
+
+void another2(MemoryPool *pool) {
+    char *str = (char*) MemoryPool_get(pool, 128);
+    assert(str);
+    
+    str[0] = 't';
+    str[1] = 'e';
+    str[2] = 's';
+    str[3] = 't';
+    str[4] = '\0';
+    axTEST(streq("test", str));
+
+    axTEST(128+128+128== pool->size);
+}
+
+void another3(MemoryPool *pool) {
+    char *str = (char*) MemoryPool_get(pool, 128);
+    assert(str);
+    
+    str[0] = 't';
+    str[1] = 'e';
+    str[2] = 's';
+    str[3] = 't';
+    str[4] = '\0';
+    axTEST(streq("test", str));
+
+    axTEST(128+128+128+128== pool->size);
+}
+
+void another1(MemoryPool *pool) {
+    char *str = (char*) MemoryPool_get(pool, 128);
+    assert(str);
+    
+    str[0] = 't';
+    str[1] = 'e';
+    str[2] = 's';
+    str[3] = 't';
+    str[4] = '\0';
+    axTEST(streq("test", str));
+
+    axTEST(128+128== pool->size);
+}
+
+void another4(MemoryPool *pool) {
+    char *str = (char*) MemoryPool_get(pool, 128);
+    assert(str);
+    
+    str[0] = 't';
+    str[1] = 'e';
+    str[2] = 's';
+    str[3] = 't';
+    str[4] = '\0';
+    axTEST(streq("test", str));
+
+    axTEST(128== pool->size);
+}
+
+void test_pool_2() {
+    MemoryPool *pool = MemoryPool_init();
+    axTEST(pool->size==0 && pool->blocks);
+    
+    char *str = (char*) MemoryPool_get(pool, 128);
+    assert(str);
+    
+    str[0] = 't';
+    str[1] = 'e';
+    str[2] = 's';
+    str[3] = 't';
+    str[4] = '\0';
+    axTEST(streq("test", str));
+    
+    another1(pool);
+    another2(pool);
+    another3(pool);
+    
+    MemoryPool_info(pool);
+    MemoryPool_free(pool);
+    axTEST(0==pool->size);
+    
+    //reuse
+     another4(pool);
+}
+
+void test_pool_3() {
+    MemoryPool *pool = MemoryPool_init();
+    axTEST(pool->size==0 && pool->blocks);
+    
+    size_t mb = 1024*1024;
+    size_t limit = 10;
+    
+    for(size_t i = 0; i < limit; i++) {
+        char *str = (char*) MemoryPool_get(pool, mb);
+    }
+    
+    MemoryPool_info(pool);
+    MemoryPool_free(pool);
+}
+
+
 int main(void) {
+    
+    test_pool_1();
+    test_pool_2();
+    test_pool_3();
 
     test_strstarts_1();
     test_strstarts_2();

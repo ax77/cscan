@@ -21,6 +21,9 @@
 // and before each use you need translate this typedef in mind...
 // with [void*] it more easy. you need cast, and only cast...
 
+typedef struct linked_list LinkedList;
+typedef struct list_node ListNode;
+
 struct linked_list {
     struct list_node {
         void *e;
@@ -30,18 +33,17 @@ struct linked_list {
     size_t size;
 };
 
-struct linked_list * list_new(void);
-struct list_node * list_node_new(struct list_node *prev, void *e,
-        struct list_node *next);
-struct list_node * list_get_node(struct linked_list *list, size_t index);
+LinkedList * list_new(void);
+ListNode * list_node_new(ListNode *prev, void *e, ListNode *next);
+ListNode * list_get_node(LinkedList *list, size_t index);
 
-int list_is_empty(struct linked_list *list);
-size_t list_size(struct linked_list *list);
-void list_push_front(struct linked_list *list, void *e);
-void list_push_back(struct linked_list *list, void *e);
-void * list_pop_front(struct linked_list *list);
-void * list_pop_back(struct linked_list *list);
-void * list_get(struct linked_list *list, size_t at_index);
-void * list_set(struct linked_list *list, size_t at_index, void *element);
+int list_is_empty(LinkedList *list);
+size_t list_size(LinkedList *list);
+void list_push_front(LinkedList *list, void *e);
+void list_push_back(LinkedList *list, void *e);
+void * list_pop_front(LinkedList *list);
+void * list_pop_back(LinkedList *list);
+void * list_get(LinkedList *list, size_t at_index);
+void * list_set(LinkedList *list, size_t at_index, void *element);
 
 #endif /* CORE_LIST_H_ */
