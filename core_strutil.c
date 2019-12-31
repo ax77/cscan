@@ -2,15 +2,15 @@
 
 struct strbuilder *pathnormalize(char *where) {
   assert(where);
-  
+
   size_t slen = strlen(where);
   struct strbuilder *out = sb_new();
-  
+
   if(slen == 0) {
       sb_adds(out, "./");
       return out;
   }
-  
+
   int prevc = '\0';
   for(size_t i = 0; where[i]; i++) {
     int c = where[i];
@@ -24,7 +24,7 @@ struct strbuilder *pathnormalize(char *where) {
     sb_addc(out, nc);
     prevc = c;
   }
-  
+
   return out;
 }
 
@@ -101,4 +101,89 @@ void sb_adds(struct strbuilder *s, char *news) {
     sb_addc(s, news[i]);
   }
 }
+
+struct strbuilder *sb_left(struct strbuilder *from, size_t much) {
+    assert(from && from->str);
+
+    struct strbuilder *res = sb_new();
+    // I) empty one or another.
+    if(from->len == 0 || much == 0) {
+        return res;
+    }
+    // II) overflow, return full content of src
+    if(much >= from->len) {
+        sb_adds(res, from->str);
+        return res;
+    }
+    // III) normal cases
+    for(size_t i = 0; i < much; i++) {
+        sb_addc(res, from->str[i]);
+    }
+    return res;
+}
+
+struct strbuilder *sb_right(struct strbuilder *from, size_t much) {
+    assert(from && from->str);
+
+    struct strbuilder *res = sb_new();
+    // I) empty one or another.
+    if(from->len == 0 || much == 0) {
+        return res;
+    }
+    // II) overflow, return full content of src
+    if(much >= from->len) {
+        sb_adds(res, from->str);
+        return res;
+    }
+    //III) normal cases
+    size_t start = from->len - much;
+    for(size_t i = start; i < from->len; i++) {
+        sb_addc(res, from->str[i]);
+    }
+    return res;
+}
+
+struct strbuilder *sb_mid(struct strbuilder *from, size_t begin, size_t much) {
+    assert(from && from->str);
+
+    struct strbuilder *res = sb_new();
+    // I) empty
+    if(begin >= from->len) {
+        return res;
+    }
+    // II) overflow, return full content of src from begin to .len
+    if(much >= from->len) {
+        much = from->len;
+    }
+    size_t end = begin + much;
+    if(end >= from->len) {
+        end = from->len;
+    }
+    for(size_t i = begin; i < end; i++) {
+        sb_addc(res, from->str[i]);
+    }
+    return res;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
