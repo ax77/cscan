@@ -1,15 +1,16 @@
 #include "core_strutil.h"
 
-char *pathnormalize(char *where) {
+struct strbuilder *pathnormalize(char *where) {
   assert(where);
   
   size_t slen = strlen(where);
-  char *out = malloc(slen + 1); // +- doesn't matter
+  struct strbuilder *out = sb_new();
   
-  assert(out);
-  *out = '\0';
+  if(slen == 0) {
+      sb_adds(out, "./");
+      return out;
+  }
   
-  size_t j = 0;  
   int prevc = '\0';
   for(size_t i = 0; where[i]; i++) {
     int c = where[i];
@@ -19,11 +20,11 @@ char *pathnormalize(char *where) {
         continue;
       }
     }
-    out[j++] = (c == '\\' ? '/' : c);
+    int nc = (c == '\\' ? '/' : c);
+    sb_addc(out, nc);
     prevc = c;
   }
   
-  out[j] = '\0';
   return out;
 }
 
@@ -66,3 +67,38 @@ int strends(char *what, char *with) {
 	}
 	return 1;
 }
+
+struct strbuilder *sb_new() {
+  struct strbuilder *rv = malloc(sizeof(struct strbuilder));
+  rv->len = 0;
+  rv->alloc = 8;
+  rv->str = malloc(rv->alloc * sizeof(char));
+  rv->str[rv->len] = '\0';
+  return rv;
+}
+
+static void sb_grow(struct strbuilder *s) {
+  s->alloc *= 2;
+  s->str = realloc(s->str, s->alloc * sizeof(char));
+}
+
+void sb_addc(struct strbuilder *s, char c) {
+  if (!c) {
+    return;
+  }
+  if ((s->len + 2) == s->alloc) {
+    sb_grow(s);
+  }
+  s->str[s->len++] = c;
+  s->str[s->len] = '\0';
+}
+
+void sb_adds(struct strbuilder *s, char *news) {
+  if (!news) {
+    return;
+  }
+  for (size_t i = 0; news[i]; i++) {
+    sb_addc(s, news[i]);
+  }
+}
+

@@ -1,0 +1,12 @@
+OBJS= $(wildcard *.c)
+OBJ_NAME= test
+COMPILER_FLAGS= -Wall
+CC= gcc
+INCLUDE_PATHS= -I.
+LINKER_FLAGS= 
+
+all : $(OBJS)
+	$(CC) $(OBJS) $(INCLUDE_PATHS) $(LIBRARY_PATHS) $(COMPILER_FLAGS) $(LINKER_FLAGS) -o $(OBJ_NAME)
+
+clean:
+	rm -rf $(OBJECTS) $(TARGET)
