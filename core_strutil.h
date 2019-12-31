@@ -5,5 +5,6 @@
 
 int strstarts(char *what, char *with);
 int strends(char *what, char *with);
+char *pathnormalize(char *where);
 
 #endif /* CORE_STRUTIL_H_ */

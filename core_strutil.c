@@ -1,5 +1,32 @@
 #include "core_strutil.h"
 
+char *pathnormalize(char *where) {
+  assert(where);
+  
+  size_t slen = strlen(where);
+  char *out = malloc(slen + 1); // +- doesn't matter
+  
+  assert(out);
+  *out = '\0';
+  
+  size_t j = 0;  
+  int prevc = '\0';
+  for(size_t i = 0; where[i]; i++) {
+    int c = where[i];
+    if(c == '\\' || c == '/') {
+      if(prevc == '\\' || prevc == '/') {
+        prevc = c;
+        continue;
+      }
+    }
+    out[j++] = (c == '\\' ? '/' : c);
+    prevc = c;
+  }
+  
+  out[j] = '\0';
+  return out;
+}
+
 int strstarts(char *what, char *with) {
 	assert(what);
 	assert(with);

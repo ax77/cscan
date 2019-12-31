@@ -117,6 +117,34 @@ void test_strends_5() {
 	axTEST(strends("test/include", "t/include"));
 }
 
+int streq(char *s1, char *s2) {
+  return strcmp(s1, s2) == 0;
+}
+
+void test_pathnormalize_1() {
+  char *s = pathnormalize("usr//local//include");
+  printf("%s\n", s);
+  axTEST(streq(s, "usr/local/include"));
+}
+
+void test_pathnormalize_2() {
+  char *s1 = pathnormalize("//\\usr//\\//\\local//\\//\\include\\//\\//");
+  char *s2 = "/usr/local/include/";
+  axTEST(strlen(s1)==strlen(s2));
+}
+
+void test_pathnormalize_3() {
+  char *s1 = pathnormalize("//\\usr//\\//\\local//\\//\\include\\//\\//string.h");
+  char *s2 = "/usr/local/include/string.h";
+  axTEST(strlen(s1)==strlen(s2));
+}
+
+void test_pathnormalize_4() {
+  char *s1 = pathnormalize("");
+  char *s2 = "./";
+  axTEST(strlen(s1)==strlen(s2));
+}
+
 int main(void) {
 
 	test_strstarts_1();
@@ -129,6 +157,10 @@ int main(void) {
 	test_strends_3();
 	test_strends_4();
 	test_strends_5();
+  test_pathnormalize_1();
+  test_pathnormalize_2();
+  test_pathnormalize_3();
+  //test_pathnormalize_4();
 
 	size_t s= 0;
 	char *source = readfile("token.c", &s);
