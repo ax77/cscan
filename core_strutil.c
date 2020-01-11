@@ -234,8 +234,7 @@ struct strbuilder *sb_replace(struct strbuilder *where, char *what, char *with) 
 	// StrReplace("abc", "abcde", "/")  :: abc
 	// StrReplace("abc", "", "")        :: abc
 	// XXX: StrReplace("abc", "a", "")  :: bc
-	if (what_len == 0
-			|| what_len > buflen
+	if (what_len == 0 || what_len > buflen
 			|| (what_len == 0 && with_len == 0)) {
 		return sb_copy(where);
 	}
@@ -251,11 +250,16 @@ struct strbuilder *sb_replace(struct strbuilder *where, char *what, char *with) 
 			sb_forget_update(tmp);
 		}
 	}
-	if (strequal(tmp->str, what)) {
-		sb_adds(res, with);
-		tmp = sb_new(); // TODO:
-	} else {
-		sb_adds(res, tmp->str);
+	if (tmp->len > 0) {
+		struct strbuilder *r = sb_right(tmp, what_len);
+		if (strequal(r->str, what)) {
+			struct strbuilder *l = sb_left(tmp, tmp->len - what_len);
+			sb_adds(res, l->str);
+			sb_adds(res, with);
+			sb_forget_update(tmp);
+		} else {
+            sb_adds(res, tmp->str);
+        }
 	}
 
 	return res;

@@ -251,11 +251,29 @@ void test_replace_3() {
 	printf("%s\n", res->str);
 }
 
+void test_replace_4() {
+	struct strbuilder *buf = sb_new();
+	sb_adds(buf, "test replace all .");
+
+	struct strbuilder *res = sb_replace(buf, ".", "/");
+	printf("%s\n", res->str);
+}
+
+void test_replace_5() {
+	struct strbuilder *buf = sb_new();
+	sb_adds(buf, "test replace all ...");
+
+	struct strbuilder *res = sb_replace(buf, "all .", "/");
+	printf("%s\n", res->str);
+}
+
 int main(void) {
 	test_replace_0();
 	test_replace_1();
 	test_replace_2();
 	test_replace_3();
+    test_replace_4();
+    test_replace_5();
 
 	test_strstarts_1();
 	test_strstarts_2();
