@@ -1,6 +1,6 @@
 OBJS= $(wildcard *.c)
 OBJ_NAME= test
-COMPILER_FLAGS= -Wall
+COMPILER_FLAGS= -w -std=c99
 CC= gcc
 INCLUDE_PATHS= -I.
 LINKER_FLAGS= 

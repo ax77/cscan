@@ -20,5 +20,6 @@ struct strbuilder *sb_left(struct strbuilder *from, size_t much) ;
 struct strbuilder *sb_right(struct strbuilder *from, size_t much) ;
 struct strbuilder *sb_mid(struct strbuilder *from, size_t begin, size_t much);
 struct strbuilder *sb_trim(struct strbuilder *from);
+struct strbuilder *sb_replace(struct strbuilder *where, char *what, char *with);
 
 #endif /* CORE_STRUTIL_H_ */

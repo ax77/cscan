@@ -28,13 +28,13 @@ struct FileWrapper *FileWrapper_new(char *given) {
     int exists = 0;
     int status = fileinfo(given, &size, &exists);
     
-    file->from = strdup(given);
+    //file->from = strdup(given);
     file->size = size;
     file->exists = exists;
     
     file->isdir = 0;
     if(status) {
-        file->isdir = is_dir(given);
+        //file->isdir = is_dir(given);
     }
     
     return file;
