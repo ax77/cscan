@@ -12,13 +12,13 @@
 
 struct FileWrapper {
     char *from;
-    
+
     struct strbuilder *name;
     struct strbuilder *basename;
     struct strbuilder *fullname;
     struct strbuilder *path;
     struct strbuilder *extension;
-    
+
     size_t size;
     int isdir, exists;
 };

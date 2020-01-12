@@ -1,13 +1,15 @@
 #include "core_buf.h"
 
-static size_t min(size_t a, size_t b) {
+static size_t min(size_t a, size_t b)
+{
     if (a < b) {
         return a;
     }
     return b;
 }
 
-struct ccbuf *ccbuf_new(char *from) {
+struct ccbuf *ccbuf_new(char *from)
+{
     struct ccbuf *r = malloc(sizeof(struct ccbuf));
     r->buf = strdup(from);
 
@@ -23,7 +25,8 @@ struct ccbuf *ccbuf_new(char *from) {
     return r;
 }
 
-int nextc(struct ccbuf *b) {
+int nextc(struct ccbuf *b)
+{
     // when you build buffer, allocate more space to avoid IOOB check
     // for example: source = { '1', '2', '3', '\0' }, buffer = { '1', '2', '3', '\0', '\0', '\0', '\0', '\0' }
 
@@ -92,7 +95,8 @@ int nextc(struct ccbuf *b) {
     return HC_FEOF;
 }
 
-static int nextis_internal(struct ccbuf *b, char *what) {
+static int nextis_internal(struct ccbuf *b, char *what)
+{
     // buffer: "adcde"
     // what  : "abcdef"
     // is false positive may be here. because we check first 5 chars, min...
@@ -112,7 +116,8 @@ static int nextis_internal(struct ccbuf *b, char *what) {
     return 1;
 }
 
-int nextis(struct ccbuf *b, char *what) {
+int nextis(struct ccbuf *b, char *what)
+{
     size_t offset_save = b->offset;
     size_t line_save = b->line;
     size_t column_save = b->column;
