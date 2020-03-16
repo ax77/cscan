@@ -1,19 +1,32 @@
 #include "core_buf.h"
+#include "core_mem.h"
 
-static size_t min(size_t a, size_t b)
-{
+static size_t min(size_t a, size_t b) {
     if (a < b) {
         return a;
     }
     return b;
 }
 
-struct ccbuf *ccbuf_new(char *from)
-{
-    struct ccbuf *r = malloc(sizeof(struct ccbuf));
-    r->buf = strdup(from);
+Cbuffer *ccbuf_new(char *from) {
+    assert(from);
 
-    r->size = strlen(from);
+    Cbuffer *r = cc_malloc(sizeof(Cbuffer));
+
+    char * source = cc_strdup(from);
+    size_t buflen = strlen(from);
+
+    // +32 : some little padding, when we check the buffer like this: buffer[index + 2].
+    size_t alloclen = (buflen + 32) * sizeof(char);
+
+    r->buf = (char*) cc_malloc(alloclen);
+    for (size_t j = 0; j < alloclen; j++) {
+        r->buf[j] = '\0';
+    }
+
+    strcpy(r->buf, source);
+
+    r->size = buflen;
     r->offset = 0;
 
     r->line = 1;
@@ -25,15 +38,14 @@ struct ccbuf *ccbuf_new(char *from)
     return r;
 }
 
-int nextc(struct ccbuf *b)
-{
+int nextc(Cbuffer *b) {
     // when you build buffer, allocate more space to avoid IOOB check
     // for example: source = { '1', '2', '3', '\0' }, buffer = { '1', '2', '3', '\0', '\0', '\0', '\0', '\0' }
 
     for (;;) {
 
         if (b->eofs > 0) {
-            //throw new RuntimeException("Infinite loop handling...");
+            cc_fatal("Infinite loop handling...");
         }
 
         if (b->prevc == '\n') {
@@ -95,8 +107,7 @@ int nextc(struct ccbuf *b)
     return HC_FEOF;
 }
 
-static int nextis_internal(struct ccbuf *b, char *what)
-{
+static int nextis_internal(Cbuffer *b, char *what) {
     // buffer: "adcde"
     // what  : "abcdef"
     // is false positive may be here. because we check first 5 chars, min...
@@ -116,8 +127,7 @@ static int nextis_internal(struct ccbuf *b, char *what)
     return 1;
 }
 
-int nextis(struct ccbuf *b, char *what)
-{
+int nextis(Cbuffer *b, char *what) {
     size_t offset_save = b->offset;
     size_t line_save = b->line;
     size_t column_save = b->column;

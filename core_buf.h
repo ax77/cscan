@@ -14,6 +14,8 @@
 
 #define HC_FEOF (-1)
 
+typedef struct ccbuf Cbuffer;
+
 struct ccbuf {
     char *buf;
     size_t size, offset;
@@ -21,8 +23,8 @@ struct ccbuf {
     int prevc, eofs;
 };
 
-struct ccbuf *ccbuf_new(char *from);
-int nextc(struct ccbuf *b);
-int nextis(struct ccbuf *b, char *what);
+Cbuffer *ccbuf_new(char *from);
+int nextc(Cbuffer *b);
+int nextis(Cbuffer *b, char *what);
 
 #endif /* CORE_BUF_H_ */

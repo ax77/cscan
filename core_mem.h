@@ -12,4 +12,7 @@ void *intrernal_realloc(void *ptr, size_t size, const char *file, int line);
 #define cc_malloc(size) internal_malloc(size, __FILE__, __LINE__)
 void *internal_malloc(size_t size, const char *file, int line);
 
+#define cc_strdup(str) internal_strdup(str, __FILE__, __LINE__)
+char *internal_strdup(char *str, const char *file, int line);
+
 #endif

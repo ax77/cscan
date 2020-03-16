@@ -1,10 +1,30 @@
-*.o
-*.bak
-*.a
-*.exe
-*.log
-
-# cdt
-.settings/
-.cproject
+# Eclipse
+.classpath
 .project
+.settings/
+
+# Intellij
+.idea/
+*.iml
+*.iws
+
+# Mac
+.DS_Store
+
+# Thumbnails
+._*
+
+# Maven
+log/
+target/
+
+# Package Files #
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+*.stackdump

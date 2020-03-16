@@ -1,7 +1,6 @@
 #include "core_mem.h"
 
-void internal_fatal(const char *_file, int _line, const char *_func, const char *fmt, ...)
-{
+void internal_fatal(const char *_file, int _line, const char *_func, const char *fmt, ...) {
     va_list vl;
     char buffer[512];
 
@@ -13,8 +12,7 @@ void internal_fatal(const char *_file, int _line, const char *_func, const char 
     exit(128);
 }
 
-void *intrernal_realloc(void *ptr, size_t size, const char *file, int line)
-{
+void *intrernal_realloc(void *ptr, size_t size, const char *file, int line) {
     void *ret = realloc(ptr, size);
     if (!ret && !size) {
         ret = realloc(ptr, 1);
@@ -25,8 +23,7 @@ void *intrernal_realloc(void *ptr, size_t size, const char *file, int line)
     return ret;
 }
 
-void *internal_malloc(size_t size, const char *file, int line)
-{
+void *internal_malloc(size_t size, const char *file, int line) {
     void *ret = malloc(size);
     if (!ret && !size) {
         ret = malloc(1);
@@ -35,4 +32,12 @@ void *internal_malloc(size_t size, const char *file, int line)
         }
     }
     return ret;
+}
+
+char *internal_strdup(char *str, const char *file, int line) {
+    assert(str);
+    size_t newlen = strlen(str) + 1;
+    char * newstr = (char*) cc_malloc(newlen);
+    strcpy(newstr, str);
+    return newstr;
 }
