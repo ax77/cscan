@@ -7,15 +7,10 @@
 
 #include "core_list.h"
 #include "core_buf.h"
-#include "token.h"
 #include "hashmap.h"
-#include "ident_hash.h"
 #include "core_strutil.h"
 #include "core_file.h"
 #include "core_mem.h"
-#include "c_array.h"
-
-HashMap *VALID_COMBINATIONS;
 
 #define axTEST(expr) do {\
   if( !(expr) ) {\
@@ -275,16 +270,6 @@ void test_replace_6() {
     printf("%s\n", res->str);
 }
 
-void test_array_0() {
-    ArrayList *array = ArrayList_new();
-    ArrayList_add(array, "1");
-    assert(streq("1", ArrayList_get(array, 0)));
-    assert(array->len == 1);
-
-    assert(streq("1", ArrayList_pop_back(array)));
-    assert(array->len == 0);
-}
-
 void test_buf_0() {
     Cbuffer * buf = ccbuf_new("");
     axTEST(buf->size == 0);
@@ -332,7 +317,6 @@ int main(void) {
     test_buf_2();
     test_buf_3();
 
-#if 0
     test_replace_0();
     test_replace_1();
     test_replace_2();
@@ -340,8 +324,6 @@ int main(void) {
     test_replace_4();
     test_replace_5();
     test_replace_6();
-
-    test_array_0();
 
     test_strstarts_1();
     test_strstarts_2();
@@ -370,7 +352,6 @@ int main(void) {
     test_strmid_5();
     test_strtrim_0();
     test_strtrim_1();
-#endif
 
     printf("\n:ok:\n");
     return 0;

@@ -18,7 +18,7 @@
 log/
 target/
 
-# Package Files #
+# Package Files
 *.jar
 *.war
 *.nar
@@ -28,3 +28,12 @@ target/
 *.rar
 
 *.stackdump
+
+# Executables
+*.exe
+*.out
+*.app
+
+
+# CDT-specific (C/C++ Development Tooling)
+.cproject
