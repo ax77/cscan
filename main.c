@@ -229,6 +229,42 @@ void test_buf_3() {
     }
 }
 
+void test_strmid_again() {
+    axTEST(streq(sb_mid(sb_news("3f420a10-5465-"), 4, 9)->str, "0a10-5465"));
+    axTEST(streq(sb_mid(sb_news("f8535dba-8cfa-"), 5, 9)->str, "dba-8cfa-"));
+    axTEST(streq(sb_mid(sb_news("0b9edb1c-b2bb-"), 0, 6)->str, "0b9edb"));
+    axTEST(streq(sb_mid(sb_news("f34285f2-5ffb-"), 3, 14)->str, "285f2-5ffb-"));
+    axTEST(streq(sb_mid(sb_news("bff4aa0f-2727-"), 6, 11)->str, "0f-2727-"));
+    axTEST(streq(sb_mid(sb_news("209a689c-527c-"), 10, 6)->str, "27c-"));
+    axTEST(streq(sb_mid(sb_news("269da2ec-c7df-"), 0, 7)->str, "269da2e"));
+    axTEST(streq(sb_mid(sb_news("22e0b7cb-21ec-"), 5, 4)->str, "7cb-"));
+    axTEST(streq(sb_mid(sb_news("ad2b4db3-d89e-"), 6, 1)->str, "b"));
+    axTEST(streq(sb_mid(sb_news("3833781d-b109-"), 3, 14)->str, "3781d-b109-"));
+    axTEST(streq(sb_mid(sb_news("8e132b56-3832-"), 10, 9)->str, "832-"));
+    axTEST(streq(sb_mid(sb_news("163e950d-3908-"), 7, 11)->str, "d-3908-"));
+    axTEST(streq(sb_mid(sb_news("1d5f3c7b-ab4d-"), 7, 13)->str, "b-ab4d-"));
+    axTEST(streq(sb_mid(sb_news("9e0a1634-9632-"), 0, 8)->str, "9e0a1634"));
+    axTEST(streq(sb_mid(sb_news("7508749d-eabc-"), 11, 4)->str, "bc-"));
+    axTEST(streq(sb_mid(sb_news("6c0e523b-1272-"), 9, 7)->str, "1272-"));
+    axTEST(streq(sb_mid(sb_news("15635e34-69ac-"), 1, 10)->str, "5635e34-69"));
+    axTEST(streq(sb_mid(sb_news("8f41d3d7-b717-"), 8, 7)->str, "-b717-"));
+    axTEST(streq(sb_mid(sb_news("bf84b542-ba2b-"), 0, 11)->str, "bf84b542-ba"));
+    axTEST(streq(sb_mid(sb_news("58ae2e21-4d2d-"), 12, 3)->str, "d-"));
+    axTEST(streq(sb_mid(sb_news("fd255310-91d4-"), 4, 7)->str, "5310-91"));
+    axTEST(streq(sb_mid(sb_news("ea840d0e-19de-"), 12, 8)->str, "e-"));
+    axTEST(streq(sb_mid(sb_news("e5306b54-665d-"), 4, 6)->str, "6b54-6"));
+    axTEST(streq(sb_mid(sb_news("7befdd16-cd27-"), 13, 3)->str, "-"));
+    axTEST(streq(sb_mid(sb_news("de808b5f-9ebe-"), 0, 0)->str, ""));
+    axTEST(streq(sb_mid(sb_news("34ecbaff-25a5-"), 2, 2)->str, "ec"));
+    axTEST(streq(sb_mid(sb_news("4be184fd-573f-"), 0, 8)->str, "4be184fd"));
+    axTEST(streq(sb_mid(sb_news("ffcf774c-e3c5-"), 0, 3)->str, "ffc"));
+    axTEST(streq(sb_mid(sb_news("bf06c07c-240f-"), 4, 11)->str, "c07c-240f-"));
+    axTEST(streq(sb_mid(sb_news("d4362892-993d-"), 13, 14)->str, "-"));
+    axTEST(streq(sb_mid(sb_news("fc36edf4-647c-"), 6, 1)->str, "f"));
+    axTEST(streq(sb_mid(sb_news("d39f9cbe-d1a0-"), 4, 3)->str, "9cb"));
+    axTEST(streq(sb_mid(sb_news("56ed5dc4-d6cc-"), 9, 13)->str, "d6cc-"));
+}
+
 int main(void) {
 
     test_buf_0();
@@ -259,6 +295,8 @@ int main(void) {
     test_strmid_5();
     test_strtrim_0();
     test_strtrim_1();
+
+    test_strmid_again();
 
     printf("\n:ok:\n");
     return 0;

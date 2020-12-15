@@ -11,6 +11,7 @@ struct strbuilder {
 };
 
 StrBuilder *sb_new();
+StrBuilder *sb_news(char * str);
 void sb_addc(StrBuilder *s, char c);
 void sb_adds(StrBuilder *s, char *news);
 StrBuilder *sb_copy(StrBuilder *what);

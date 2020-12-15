@@ -49,6 +49,12 @@ StrBuilder *sb_new() {
     return rv;
 }
 
+StrBuilder *sb_news(char * str) {
+    StrBuilder *rv = sb_new();
+    sb_adds(rv, str);
+    return rv;
+}
+
 static void sb_grow(StrBuilder *s) {
     s->alloc *= 2;
     s->str = realloc(s->str, s->alloc * sizeof(char));
