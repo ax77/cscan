@@ -1,4 +1,5 @@
 #include "core_strutil.h"
+#include "core_mem.h"
 
 int strstarts(char *what, char *with) {
     assert(what);
@@ -176,5 +177,46 @@ StrBuilder *sb_trim(StrBuilder *from) {
         sb_addc(res, from->str[i]);
     }
     return res;
+}
+
+LinkedList * sb_split_char(StrBuilder * where, char sep, bool include_empty) {
+    LinkedList * lines = list_new();
+    size_t len = where->len;
+
+    if (len == 0) {
+        return lines;
+    }
+
+    StrBuilder * sb = sb_new();
+    for (size_t i = 0; i < len; i++) {
+        char c = where->str[i];
+        if (c == sep) {
+            if (sb->len > 0 || (sb->len == 0 && include_empty)) {
+                list_push_back(lines, cc_strdup(sb->str));
+            }
+
+            // TODO: more clean
+            free(sb->str);
+            free(sb);
+
+            sb = sb_new();
+            continue;
+        }
+        sb_addc(sb, c);
+    }
+
+    if (sb->len > 0 || (sb->len == 0 && include_empty)) {
+        list_push_back(lines, cc_strdup(sb->str));
+    }
+
+    // TODO: more clean
+    if (sb) {
+        if (sb->str) {
+            free(sb->str);
+        }
+        free(sb);
+    }
+
+    return lines;
 }
 

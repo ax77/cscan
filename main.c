@@ -346,6 +346,15 @@ void test_hashmap_str_1() {
     axTEST(streq(HashMap_get(map, "1"), "0"));
 }
 
+void test_split_char_1() {
+    StrBuilder *input = sb_news("src/test/inlude/my/folder/to/std/headers/");
+    LinkedList * lines = sb_split_char(input, '/', false);
+    for (ListNode * node = lines->first; node; node = node->next) {
+        char *str = (char*) node->e;
+        assert(str);
+    }
+}
+
 int main(void) {
 
     test_buf_0();
@@ -376,10 +385,12 @@ int main(void) {
     test_strmid_5();
     test_strtrim_0();
     test_strtrim_1();
-
     test_strmid_again();
+
     test_hashmap_pointers_1();
     test_hashmap_str_1();
+
+    test_split_char_1();
 
     printf("\n:ok:\n");
     return 0;

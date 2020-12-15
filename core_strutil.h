@@ -2,6 +2,7 @@
 #define CORE_STRUTIL_H_
 
 #include "cheaders.h"
+#include "core_list.h"
 
 typedef struct strbuilder StrBuilder;
 
@@ -19,6 +20,8 @@ StrBuilder *sb_left(StrBuilder *from, size_t much);
 StrBuilder *sb_right(StrBuilder *from, size_t much);
 StrBuilder *sb_mid(StrBuilder *from, size_t begin, size_t much);
 StrBuilder *sb_trim(StrBuilder *from);
+
+LinkedList * sb_split_char(StrBuilder * where, char sep, bool include_empty); // list_of(char*)
 
 int strstarts(char *what, char *with);
 int strends(char *what, char *with);
