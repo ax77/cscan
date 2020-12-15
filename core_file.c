@@ -1,14 +1,12 @@
 #include "core_file.h"
 
-static int is_dir(const char* target)
-{
+static int is_dir(const char* target) {
     struct stat statbuf;
     stat(target, &statbuf);
     return S_ISDIR(statbuf.st_mode);
 }
 
-static int fileinfo(char *given, size_t *size, int *exists)
-{
+static int fileinfo(char *given, size_t *size, int *exists) {
     FILE *fp = fopen(given, "rb");
     if (fp) {
         fseek(fp, 0, SEEK_END);
@@ -21,8 +19,7 @@ static int fileinfo(char *given, size_t *size, int *exists)
     return 0;
 }
 
-struct FileWrapper *FileWrapper_new(char *given)
-{
+struct FileWrapper *FileWrapper_new(char *given) {
     struct FileWrapper *file = malloc(sizeof(struct FileWrapper));
     assert(file);
 
@@ -42,8 +39,7 @@ struct FileWrapper *FileWrapper_new(char *given)
     return file;
 }
 
-char* readfile(const char *filename, size_t *szout)
-{
+char* readfile(const char *filename, size_t *szout) {
     FILE *fp = NULL;
     size_t n, sz;
 

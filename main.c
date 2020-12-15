@@ -84,30 +84,6 @@ int streq(char *s1, char *s2) {
     return strcmp(s1, s2) == 0;
 }
 
-void test_pathnormalize_1() {
-    struct strbuilder *s = pathnormalize("usr//local//include");
-    //printf("%s\n", s->str);
-    axTEST(streq(s->str, "usr/local/include"));
-}
-
-void test_pathnormalize_2() {
-    struct strbuilder *s1 = pathnormalize("//\\usr//\\//\\local//\\//\\include\\//\\//");
-    char *s2 = "/usr/local/include/";
-    axTEST(strlen(s1->str) == strlen(s2));
-}
-
-void test_pathnormalize_3() {
-    struct strbuilder *s1 = pathnormalize("//\\usr//\\//\\local//\\//\\include\\//\\//string.h");
-    char *s2 = "/usr/local/include/string.h";
-    axTEST(strlen(s1->str) == strlen(s2));
-}
-
-void test_pathnormalize_4() {
-    struct strbuilder *s1 = pathnormalize("");
-    char *s2 = "./";
-    axTEST(strlen(s1->str) == strlen(s2));
-}
-
 void test_strleft_0() {
     struct strbuilder *buf = sb_new();
     sb_adds(buf, "1024");
@@ -213,63 +189,6 @@ void test_strtrim_1() {
     //printf("[%s]\n", res->str);
 }
 
-void test_replace_0() {
-    struct strbuilder *buf = sb_new();
-    sb_adds(buf, "string_1024");
-
-    struct strbuilder *res = sb_replace(buf, "0", "abc");
-    printf("%s\n", res->str);
-}
-
-void test_replace_1() {
-    struct strbuilder *buf = sb_new();
-    sb_adds(buf, "a b c d e f");
-
-    struct strbuilder *res = sb_replace(buf, " ", "/");
-    printf("%s\n", res->str);
-}
-
-void test_replace_2() {
-    struct strbuilder *buf = sb_new();
-    sb_adds(buf, "this is the string...this is another string...");
-
-    struct strbuilder *res = sb_replace(buf, "s ", "@ ");
-    printf("%s\n", res->str);
-}
-
-void test_replace_3() {
-    struct strbuilder *buf = sb_new();
-    sb_adds(buf, "test replace all a");
-
-    struct strbuilder *res = sb_replace(buf, "a", "/");
-    printf("%s\n", res->str);
-}
-
-void test_replace_4() {
-    struct strbuilder *buf = sb_new();
-    sb_adds(buf, "test replace all .");
-
-    struct strbuilder *res = sb_replace(buf, ".", "/");
-    printf("%s\n", res->str);
-}
-
-void test_replace_5() {
-    struct strbuilder *buf = sb_new();
-    sb_adds(buf, "test replace all ...");
-
-    struct strbuilder *res = sb_replace(buf, "all .", "/");
-    printf("%s\n", res->str);
-}
-
-void test_replace_6() {
-    struct strbuilder *buf = sb_new();
-    sb_adds(buf,
-            "where everything else begins, because object appeared when their names become known..e");
-
-    struct strbuilder *res = sb_replace(buf, "e", ".");
-    printf("%s\n", res->str);
-}
-
 void test_buf_0() {
     Cbuffer * buf = ccbuf_new("");
     axTEST(buf->size == 0);
@@ -317,14 +236,6 @@ int main(void) {
     test_buf_2();
     test_buf_3();
 
-    test_replace_0();
-    test_replace_1();
-    test_replace_2();
-    test_replace_3();
-    test_replace_4();
-    test_replace_5();
-    test_replace_6();
-
     test_strstarts_1();
     test_strstarts_2();
     test_strstarts_3();
@@ -335,10 +246,6 @@ int main(void) {
     test_strends_3();
     test_strends_4();
     test_strends_5();
-    test_pathnormalize_1();
-    test_pathnormalize_2();
-    test_pathnormalize_3();
-    test_pathnormalize_4();
     test_strleft_0();
     test_strleft_1();
     test_strleft_2();

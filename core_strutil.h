@@ -3,23 +3,23 @@
 
 #include "cheaders.h"
 
-int strstarts(char *what, char *with);
-int strends(char *what, char *with);
-struct strbuilder *pathnormalize(char *where);
+typedef struct strbuilder StrBuilder;
 
 struct strbuilder {
     size_t len, alloc;
     char *str;
 };
 
-struct strbuilder *sb_new();
-void sb_addc(struct strbuilder *s, char c);
-void sb_adds(struct strbuilder *s, char *news);
-struct strbuilder *sb_copy(struct strbuilder *what);
-struct strbuilder *sb_left(struct strbuilder *from, size_t much);
-struct strbuilder *sb_right(struct strbuilder *from, size_t much);
-struct strbuilder *sb_mid(struct strbuilder *from, size_t begin, size_t much);
-struct strbuilder *sb_trim(struct strbuilder *from);
-struct strbuilder *sb_replace(struct strbuilder *where, char *what, char *with);
+StrBuilder *sb_new();
+void sb_addc(StrBuilder *s, char c);
+void sb_adds(StrBuilder *s, char *news);
+StrBuilder *sb_copy(StrBuilder *what);
+StrBuilder *sb_left(StrBuilder *from, size_t much);
+StrBuilder *sb_right(StrBuilder *from, size_t much);
+StrBuilder *sb_mid(StrBuilder *from, size_t begin, size_t much);
+StrBuilder *sb_trim(StrBuilder *from);
+
+int strstarts(char *what, char *with);
+int strends(char *what, char *with);
 
 #endif /* CORE_STRUTIL_H_ */

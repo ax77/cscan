@@ -1,36 +1,6 @@
 #include "core_strutil.h"
 
-struct strbuilder *pathnormalize(char *where)
-{
-    assert(where);
-
-    size_t slen = strlen(where);
-    struct strbuilder *out = sb_new();
-
-    if (slen == 0) {
-        sb_adds(out, "./");
-        return out;
-    }
-
-    int prevc = '\0';
-    for (size_t i = 0; where[i]; i++) {
-        int c = where[i];
-        if (c == '\\' || c == '/') {
-            if (prevc == '\\' || prevc == '/') {
-                prevc = c;
-                continue;
-            }
-        }
-        int nc = (c == '\\' ? '/' : c);
-        sb_addc(out, nc);
-        prevc = c;
-    }
-
-    return out;
-}
-
-int strstarts(char *what, char *with)
-{
+int strstarts(char *what, char *with) {
     assert(what);
     assert(with);
 
@@ -50,8 +20,7 @@ int strstarts(char *what, char *with)
     return 1;
 }
 
-int strends(char *what, char *with)
-{
+int strends(char *what, char *with) {
     assert(what);
     assert(with);
 
@@ -71,9 +40,8 @@ int strends(char *what, char *with)
     return 1;
 }
 
-struct strbuilder *sb_new()
-{
-    struct strbuilder *rv = malloc(sizeof(struct strbuilder));
+StrBuilder *sb_new() {
+    StrBuilder *rv = malloc(sizeof(StrBuilder));
     rv->len = 0;
     rv->alloc = 8;
     rv->str = malloc(rv->alloc * sizeof(char));
@@ -81,14 +49,12 @@ struct strbuilder *sb_new()
     return rv;
 }
 
-static void sb_grow(struct strbuilder *s)
-{
+static void sb_grow(StrBuilder *s) {
     s->alloc *= 2;
     s->str = realloc(s->str, s->alloc * sizeof(char));
 }
 
-void sb_addc(struct strbuilder *s, char c)
-{
+void sb_addc(StrBuilder *s, char c) {
     if (!c) {
         return;
     }
@@ -99,8 +65,7 @@ void sb_addc(struct strbuilder *s, char c)
     s->str[s->len] = '\0';
 }
 
-void sb_adds(struct strbuilder *s, char *news)
-{
+void sb_adds(StrBuilder *s, char *news) {
     if (!news) {
         return;
     }
@@ -109,18 +74,16 @@ void sb_adds(struct strbuilder *s, char *news)
     }
 }
 
-struct strbuilder *sb_copy(struct strbuilder *what)
-{
-    struct strbuilder *res = sb_new();
+StrBuilder *sb_copy(StrBuilder *what) {
+    StrBuilder *res = sb_new();
     sb_adds(res, what->str);
     return res;
 }
 
-struct strbuilder *sb_left(struct strbuilder *from, size_t much)
-{
+StrBuilder *sb_left(StrBuilder *from, size_t much) {
     assert(from && from->str);
 
-    struct strbuilder *res = sb_new();
+    StrBuilder *res = sb_new();
     // I) empty one or another.
     if (from->len == 0 || much == 0) {
         return res;
@@ -136,11 +99,10 @@ struct strbuilder *sb_left(struct strbuilder *from, size_t much)
     return res;
 }
 
-struct strbuilder *sb_right(struct strbuilder *from, size_t much)
-{
+StrBuilder *sb_right(StrBuilder *from, size_t much) {
     assert(from && from->str);
 
-    struct strbuilder *res = sb_new();
+    StrBuilder *res = sb_new();
     // I) empty one or another.
     if (from->len == 0 || much == 0) {
         return res;
@@ -157,11 +119,10 @@ struct strbuilder *sb_right(struct strbuilder *from, size_t much)
     return res;
 }
 
-struct strbuilder *sb_mid(struct strbuilder *from, size_t begin, size_t much)
-{
+StrBuilder *sb_mid(StrBuilder *from, size_t begin, size_t much) {
     assert(from && from->str);
 
-    struct strbuilder *res = sb_new();
+    StrBuilder *res = sb_new();
     // I) empty
     if (begin >= from->len) {
         return res;
@@ -180,11 +141,10 @@ struct strbuilder *sb_mid(struct strbuilder *from, size_t begin, size_t much)
     return res;
 }
 
-struct strbuilder *sb_trim(struct strbuilder *from)
-{
+StrBuilder *sb_trim(StrBuilder *from) {
     assert(from && from->str);
 
-    struct strbuilder *res = sb_new();
+    StrBuilder *res = sb_new();
     if (from->len == 0) {
         return res;
     }
@@ -209,73 +169,6 @@ struct strbuilder *sb_trim(struct strbuilder *from)
     for (size_t i = start; i <= end; i++) {
         sb_addc(res, from->str[i]);
     }
-    return res;
-}
-
-static int strequal(char *what, char *with)
-{
-    return strcmp(what, with) == 0;
-}
-
-void sb_forget_update(struct strbuilder *sb)
-{
-    assert(sb);
-    assert(sb->str);
-    free(sb->str);
-
-    sb->len = 0;
-    sb->alloc = 8;
-    sb->str = malloc(sb->alloc * sizeof(char));
-    assert(sb->str);
-    sb->str[0] = '\0';
-}
-
-struct strbuilder *sb_replace(struct strbuilder *where, char *what, char *with)
-{
-    assert(where);
-    assert(what);
-    assert(with);
-
-    struct strbuilder *res = sb_new();
-    size_t buflen = where->len;
-    size_t what_len = strlen(what);
-    size_t with_len = strlen(with);
-
-    // StrReplace("", "a", "b")
-    if (buflen == 0) {
-        return res;
-    }
-    // StrReplace("abc", "", "/")       :: abc
-    // StrReplace("abc", "abcde", "/")  :: abc
-    // StrReplace("abc", "", "")        :: abc
-    // XXX: StrReplace("abc", "a", "")  :: bc
-    if (what_len == 0 || what_len > buflen || (what_len == 0 && with_len == 0)) {
-        return sb_copy(where);
-    }
-
-    struct strbuilder *tmp = sb_new();
-    for (size_t i = 0; i < buflen; i++) {
-        sb_addc(tmp, where->str[i]);
-        struct strbuilder *r = sb_right(tmp, what_len);
-        if (strequal(r->str, what)) {
-            struct strbuilder *l = sb_left(tmp, tmp->len - what_len);
-            sb_adds(res, l->str);
-            sb_adds(res, with);
-            sb_forget_update(tmp);
-        }
-    }
-    if (tmp->len > 0) {
-        struct strbuilder *r = sb_right(tmp, what_len);
-        if (strequal(r->str, what)) {
-            struct strbuilder *l = sb_left(tmp, tmp->len - what_len);
-            sb_adds(res, l->str);
-            sb_adds(res, with);
-            sb_forget_update(tmp);
-        } else {
-            sb_adds(res, tmp->str);
-        }
-    }
-
     return res;
 }
 
