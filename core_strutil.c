@@ -179,6 +179,22 @@ StrBuilder *sb_trim(StrBuilder *from) {
     return res;
 }
 
+static void sb_free(StrBuilder ** sb) {
+    if (*sb) {
+
+        // string, which contains inside
+        free((*sb)->str);
+        (*sb)->str = NULL;
+
+        // buffer as is
+        (*sb)->alloc = 0;
+        (*sb)->len = 0;
+
+        free(*sb);
+        *sb = NULL;
+    }
+}
+
 LinkedList * sb_split_char(StrBuilder * where, char sep, bool include_empty) {
     LinkedList * lines = list_new();
     size_t len = where->len;
@@ -195,11 +211,9 @@ LinkedList * sb_split_char(StrBuilder * where, char sep, bool include_empty) {
                 list_push_back(lines, cc_strdup(sb->str));
             }
 
-            // TODO: more clean
-            free(sb->str);
-            free(sb);
-
+            sb_free(&sb);
             sb = sb_new();
+
             continue;
         }
         sb_addc(sb, c);
@@ -209,14 +223,7 @@ LinkedList * sb_split_char(StrBuilder * where, char sep, bool include_empty) {
         list_push_back(lines, cc_strdup(sb->str));
     }
 
-    // TODO: more clean
-    if (sb) {
-        if (sb->str) {
-            free(sb->str);
-        }
-        free(sb);
-    }
-
+    sb_free(&sb);
     return lines;
 }
 
