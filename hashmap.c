@@ -5,37 +5,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-static const int kDefaultCapacity = 11;
+static size_t hashmap_hash_str(void* key);
+static size_t hashmap_hash_int(void* key);
+static bool hashmap_equal_str(void* key1, void* key2);
+static bool hashmap_equal_int(void* key1, void* key2);
+
+static const size_t kDefaultCapacity = 11;
 static const float kLoadFactor = 0.75;
-
-typedef struct entry Entry;
-struct entry {
-    void* key;
-    void* val;
-    Entry* next;
-};
-
-struct hashmap {
-    int size;
-    int capacity;
-    Entry** table;
-    int threshold;
-};
-
-static uint32_t hashmap_hash_str(void* key) {
-    unsigned char* str = key;
-
-    // djb2
-    uint32_t hash = 5381;
-    int c;
-    while ((c = *str++))
-        hash = ((hash << 5) + hash) + c; // hash * 33 + c
-    return hash;
-}
-
-static bool hashmap_equal_str(void* key1, void* key2) {
-    return strcmp((char*) key1, (char*) key2) == 0;
-}
 
 static void* entry_new(void* key, void* val, Entry* next) {
     Entry* entry = (Entry*) malloc(sizeof(Entry));
@@ -49,12 +25,14 @@ static void* entry_new(void* key, void* val, Entry* next) {
     return entry;
 }
 
-HashMap* HashMap_new() {
+HashMap* HashMap_new(HashMap_HashFunc hash, HashMap_EqualFunc equal) {
     HashMap* hashmap = (HashMap*) malloc(sizeof(HashMap));
     if (hashmap == NULL) {
         fprintf(stderr, "ERROR: out of memory\n");
         return NULL;
     }
+    hashmap->hash = hash;
+    hashmap->equal = equal;
     hashmap->size = 0;
     hashmap->capacity = kDefaultCapacity;
     hashmap->table = (Entry**) malloc(sizeof(Entry*) * hashmap->capacity);
@@ -62,11 +40,19 @@ HashMap* HashMap_new() {
         fprintf(stderr, "ERROR: out of memory\n");
         return NULL;
     }
-    for (int i = 0; i < hashmap->capacity; i++) {
+    for (size_t i = 0; i < hashmap->capacity; i++) {
         hashmap->table[i] = NULL;
     }
     hashmap->threshold = hashmap->capacity * kLoadFactor;
     return hashmap;
+}
+
+HashMap* HashMap_new_str(void) {
+    return HashMap_new(hashmap_hash_str, hashmap_equal_str);
+}
+
+HashMap* HashMap_new_int(void) {
+    return HashMap_new(hashmap_hash_int, hashmap_equal_int);
 }
 
 void HashMap_free(HashMap* self) {
@@ -80,7 +66,7 @@ void HashMap_free(HashMap* self) {
     free(self);
 }
 
-int HashMap_size(HashMap* self) {
+size_t HashMap_size(HashMap* self) {
     if (self == NULL) {
         assert(false && "self must not be null");
         return 0;
@@ -98,8 +84,8 @@ bool HashMap_empty(HashMap* self) {
     return self->size == 0;
 }
 
-static int hashmap_index(HashMap* self, void* key, int capacity) {
-    return hashmap_hash_str(key) % capacity;
+static size_t hashmap_index(HashMap* self, void* key, size_t capacity) {
+    return self->hash(key) % capacity;
 }
 
 void* HashMap_get(HashMap* self, void* key) {
@@ -112,24 +98,24 @@ void* HashMap_get(HashMap* self, void* key) {
         return NULL;
     }
 
-    int index = hashmap_index(self, key, self->capacity);
+    size_t index = hashmap_index(self, key, self->capacity);
     for (Entry* e = self->table[index]; e; e = e->next) {
-        if (hashmap_equal_str(e->key, key)) {
+        if (self->equal(e->key, key)) {
             return e->val;
         }
     }
     return NULL;
 }
 
-static void hashmap_rehash(HashMap* self, Entry** newTable, int newCapacity) {
-    for (int i = 0; i < newCapacity; i++) {
+static void hashmap_rehash(HashMap* self, Entry** newTable, size_t newCapacity) {
+    for (size_t i = 0; i < newCapacity; i++) {
         newTable[i] = NULL;
     }
-    for (int i = 0; i < self->capacity; i++) {
+    for (size_t i = 0; i < self->capacity; i++) {
         Entry* next;
         for (Entry* e = self->table[i]; e; e = next) {
             next = e->next;
-            int index = hashmap_index(self, e->key, newCapacity);
+            size_t index = hashmap_index(self, e->key, newCapacity);
             e->next = newTable[index];
             newTable[index] = e;
         }
@@ -140,7 +126,7 @@ static void hashmap_rehash(HashMap* self, Entry** newTable, int newCapacity) {
 }
 
 static bool hashmap_resize(HashMap* self) {
-    int newCapacity = self->capacity * 2 + 1;
+    size_t newCapacity = self->capacity * 2 + 1;
     Entry** newTable = (Entry**) malloc(sizeof(Entry*) * newCapacity);
     if (newTable == NULL) {
         fprintf(stderr, "ERROR: out of memory\n");
@@ -161,10 +147,10 @@ void* HashMap_add(HashMap* self, void* key, void* val) {
         return NULL;
     }
 
-    int index = hashmap_index(self, key, self->capacity);
+    size_t index = hashmap_index(self, key, self->capacity);
     // overwrite
     for (Entry* e = self->table[index]; e; e = e->next) {
-        if (hashmap_equal_str(key, e->key)) {
+        if (self->equal(key, e->key)) {
             e->val = val;
             return val;
         }
@@ -196,7 +182,7 @@ void* HashMap_remove(HashMap* self, void* key) {
         return NULL;
     }
 
-    int index = hashmap_index(self, key, self->capacity);
+    size_t index = hashmap_index(self, key, self->capacity);
     Entry* e = self->table[index];
     if (e == NULL) {
         return NULL;
@@ -205,7 +191,7 @@ void* HashMap_remove(HashMap* self, void* key) {
     Entry* next;
     for (; e; prev = e, e = next) {
         next = e->next;
-        if (hashmap_equal_str(key, e->key)) {
+        if (self->equal(key, e->key)) {
             void* val = e->val;
             if (prev == NULL)
                 self->table[index] = next;
@@ -225,7 +211,7 @@ void HashMap_clear(HashMap* self) {
         return;
     }
 
-    for (int i = 0; i < self->capacity; i++) {
+    for (size_t i = 0; i < self->capacity; i++) {
         Entry* e = self->table[i];
         if (e == NULL) {
             continue;
@@ -252,8 +238,8 @@ void** HashMap_keys(HashMap* self) {
         return NULL;
     }
     keys[self->size] = NULL;
-    int count = 0;
-    for (int i = 0; i < self->capacity; i++) {
+    size_t count = 0;
+    for (size_t i = 0; i < self->capacity; i++) {
         Entry* e = self->table[i];
         if (e == NULL) {
             continue;
@@ -266,13 +252,36 @@ void** HashMap_keys(HashMap* self) {
     return keys;
 }
 
+static size_t hashmap_hash_str(void* key) {
+    unsigned char* str = key;
+
+    // djb2
+    size_t hash = 5381;
+    size_t c;
+    while ((c = *str++))
+        hash = ((hash << 5) + hash) + c; // hash * 33 + c
+    return hash;
+}
+
+static size_t hashmap_hash_int(void* key) {
+    return *((size_t*) key);
+}
+
+static bool hashmap_equal_str(void* key1, void* key2) {
+    return strcmp((char*) key1, (char*) key2) == 0;
+}
+
+static bool hashmap_equal_int(void* key1, void* key2) {
+    return *((size_t*) key1) == *((size_t*) key2);
+}
+
 //
 // For debug
 //
 
 static void hashmap_print(HashMap* self, void (*printFunc)(Entry*)) {
     printf("HashMap: size=%d, capacity=%d\n", self->size, self->capacity);
-    for (int i = 0; i < self->capacity; i++) {
+    for (size_t i = 0; i < self->capacity; i++) {
         Entry* e = self->table[i];
         if (e == NULL) {
             continue;

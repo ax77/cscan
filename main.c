@@ -265,6 +265,87 @@ void test_strmid_again() {
     axTEST(streq(sb_mid(sb_news("56ed5dc4-d6cc-"), 9, 13)->str, "d6cc-"));
 }
 
+struct token_simple {
+    char *value;
+    int type;
+    int flag;
+};
+
+struct token_simple * token_simple_new(char *name, int type, int flag) {
+    struct token_simple * rv = cc_malloc(sizeof(struct token_simple));
+    rv->value = cc_strdup(name);
+    rv->type = type;
+    rv->flag = flag;
+    return rv;
+}
+
+bool token_simple_equal(void *a, void *b) {
+
+    struct token_simple * first = (struct token_simple*) a;
+    struct token_simple * second = (struct token_simple*) b;
+
+    if (!streq(first->value, second->value)) {
+        return false;
+    }
+    if (first->type != second->type) {
+        return false;
+    }
+    if (first->flag != second->flag) {
+        return false;
+    }
+    return true;
+}
+
+size_t token_simple_hash(void * elem) {
+    size_t ptr_hash_size = *((size_t*) elem);
+    return ptr_hash_size;
+}
+
+void token_simple_print(struct token_simple * elem, char * val) {
+    printf("value=%s, type=%d, flag=%d; valmap=%s\n", elem->value, elem->type, elem->flag, val);
+}
+
+void test_hashmap_pointers_1() {
+    HashMap * map = HashMap_new(&token_simple_hash, &token_simple_equal);
+
+    struct token_simple * a1 = token_simple_new("a", 0, 1);
+
+    HashMap_add(map, a1, "a1");
+    HashMap_add(map, a1, "a2");
+    HashMap_add(map, a1, "a3");
+
+    char * res = (char*) HashMap_get(map, a1);
+    axTEST(res);
+    axTEST(streq(res, "a3"));
+
+//    for (size_t i = 0; i < map->capacity; i++) {
+//        Entry* e = map->table[i];
+//        if (e == NULL) {
+//            continue;
+//        }
+//        printf("%4lu: ", i);
+//        for (; e; e = e->next) {
+//            token_simple_print(e->key, e->val);
+//        }
+//    }
+}
+
+void test_hashmap_str_1() {
+    HashMap * map = HashMap_new_str();
+    HashMap_add(map, "1", "1");
+    HashMap_add(map, "2", "2");
+    HashMap_add(map, "3", "3");
+
+    axTEST(HashMap_size(map) == 3);
+    axTEST(streq(HashMap_get(map, "1"), "1"));
+    axTEST(streq(HashMap_get(map, "2"), "2"));
+    axTEST(streq(HashMap_get(map, "3"), "3"));
+
+    HashMap_add(map, "1", "0");
+    axTEST(HashMap_size(map) == 3);
+    axTEST(streq(HashMap_get(map, "1"), "0"));
+}
+
 int main(void) {
 
     test_buf_0();
@@ -297,6 +378,8 @@ int main(void) {
     test_strtrim_1();
 
     test_strmid_again();
+    test_hashmap_pointers_1();
+    test_hashmap_str_1();
 
     printf("\n:ok:\n");
     return 0;
