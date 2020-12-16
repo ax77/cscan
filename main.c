@@ -11,6 +11,7 @@
 #include "core_strutil.h"
 #include "core_file.h"
 #include "core_mem.h"
+#include "core_array.h"
 
 #define axTEST(expr) do {\
   if( !(expr) ) {\
@@ -399,6 +400,19 @@ void test_replace_0()
     axTEST(streq(sb_replace(where, olds, news)->str, ".diance"));
 }
 
+void test_array_0()
+{
+    ArrayList *arr = array_new();
+    for (int i = 0; i < 10; i++) {
+        char buf[32] = { '\0' };
+        sprintf(buf, "%05d", i);
+        array_add(arr, cc_strdup(buf));
+    }
+    for (size_t i = 0; i < arr->size; i++) {
+        printf("%s\n", (char*) array_get(arr, i));
+    }
+}
+
 int main(void)
 {
 
@@ -437,6 +451,8 @@ int main(void)
 
     test_split_char_1();
     test_replace_0();
+
+    test_array_0();
 
     printf("\n:ok:\n");
     return 0;
