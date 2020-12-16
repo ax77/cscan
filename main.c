@@ -20,71 +20,83 @@
   }\
 }while(0)
 
-void test_strstarts_1() {
+void test_strstarts_1()
+{
     char *what = "1";
     char *with = "1";
     axTEST(strstarts(what, with));
 }
 
-void test_strstarts_2() {
+void test_strstarts_2()
+{
     char *what = "";
     char *with = " ";
     axTEST(!strstarts(what, with));
 }
 
-void test_strstarts_3() {
+void test_strstarts_3()
+{
     char *what = "12345";
     char *with = "1234.";
     axTEST(!strstarts(what, with));
 }
 
-void test_strstarts_4() {
+void test_strstarts_4()
+{
     char *what = "12345 ";
     char *with = "12345 ";
     axTEST(strstarts(what, with));
 }
 
-void test_strstarts_5() {
+void test_strstarts_5()
+{
     axTEST(strstarts("usr/local/include/", "usr"));
     axTEST(strstarts("usr/local/include/", "usr/local"));
     axTEST(strstarts("usr/local/include/", "usr/local/"));
 }
 
-void test_strends_1() {
+void test_strends_1()
+{
     char *what = "12345";
     char *with = "45";
     axTEST(strends(what, with));
 }
 
-void test_strends_2() {
+void test_strends_2()
+{
     char *what = "12345";
     char *with = " 45";
     axTEST(!strends(what, with));
 }
 
-void test_strends_3() {
+void test_strends_3()
+{
     char *what = "12345";
     char *with = "12345";
     axTEST(strends(what, with));
 }
 
-void test_strends_4() {
+void test_strends_4()
+{
     char *what = "test/include";
     char *with = "include";
     axTEST(strends(what, with));
 }
 
-void test_strends_5() {
+void test_strends_5()
+{
     axTEST(strends("test/include", "include"));
     axTEST(strends("test/include", "/include"));
     axTEST(strends("test/include", "t/include"));
 }
 
-int streq(char *s1, char *s2) {
+int streq(char *s1, char *s2)
+{
     return strcmp(s1, s2) == 0;
 }
 
-void test_strleft_0() {
+void test_strleft_0()
+{
     struct strbuilder *buf = sb_new();
     sb_adds(buf, "1024");
 
@@ -92,7 +104,8 @@ void test_strleft_0() {
     axTEST(streq(res->str, "10"));
 }
 
-void test_strleft_1() {
+void test_strleft_1()
+{
     struct strbuilder *buf = sb_new();
     sb_adds(buf, "1024");
 
@@ -100,7 +113,8 @@ void test_strleft_1() {
     axTEST(streq(res->str, "1024"));
 }
 
-void test_strleft_2() {
+void test_strleft_2()
+{
     struct strbuilder *buf = sb_new();
     sb_adds(buf, "");
 
@@ -108,7 +122,8 @@ void test_strleft_2() {
     axTEST(streq(res->str, ""));
 }
 
-void test_strright_0() {
+void test_strright_0()
+{
     struct strbuilder *buf = sb_new();
     sb_adds(buf, "1024");
 
@@ -116,7 +131,8 @@ void test_strright_0() {
     axTEST(streq(res->str, "24"));
 }
 
-void test_strright_1() {
+void test_strright_1()
+{
     struct strbuilder *buf = sb_new();
     sb_adds(buf, "1024");
 
@@ -124,7 +140,8 @@ void test_strright_1() {
     axTEST(streq(res->str, "1024"));
 }
 
-void test_strmid_0() {
+void test_strmid_0()
+{
     struct strbuilder *buf = sb_new();
     sb_adds(buf, "string_1024");
 
@@ -132,7 +149,8 @@ void test_strmid_0() {
     axTEST(streq(res->str, "str"));
 }
 
-void test_strmid_1() {
+void test_strmid_1()
+{
     struct strbuilder *buf = sb_new();
     sb_adds(buf, "string_1024");
 
@@ -140,7 +158,8 @@ void test_strmid_1() {
     axTEST(streq(res->str, "ing_1024"));
 }
 
-void test_strmid_2() {
+void test_strmid_2()
+{
     struct strbuilder *buf = sb_new();
     sb_adds(buf, "string_1024");
 
@@ -148,7 +167,8 @@ void test_strmid_2() {
     axTEST(streq(res->str, "ing"));
 }
 
-void test_strmid_3() {
+void test_strmid_3()
+{
     struct strbuilder *buf = sb_new();
     sb_adds(buf, "string_1024");
 
@@ -156,7 +176,8 @@ void test_strmid_3() {
     axTEST(streq(res->str, "ing_1024"));
 }
 
-void test_strmid_4() {
+void test_strmid_4()
+{
     struct strbuilder *buf = sb_new();
     sb_adds(buf, "string_1024");
 
@@ -164,7 +185,8 @@ void test_strmid_4() {
     axTEST(streq(res->str, "ing_1024"));
 }
 
-void test_strmid_5() {
+void test_strmid_5()
+{
     struct strbuilder *buf = sb_new();
     sb_adds(buf, "string_1024");
 
@@ -172,7 +194,8 @@ void test_strmid_5() {
     axTEST(streq(res->str, "ing_102"));
 }
 
-void test_strtrim_0() {
+void test_strtrim_0()
+{
     struct strbuilder *buf = sb_new();
     sb_adds(buf, "\n\n  string_1024 \n\n  \n\n\t \r\n\n ");
 
@@ -180,7 +203,8 @@ void test_strtrim_0() {
     axTEST(streq(res->str, "string_1024"));
 }
 
-void test_strtrim_1() {
+void test_strtrim_1()
+{
     struct strbuilder *buf = sb_new();
     sb_adds(buf, "string_1024");
 
@@ -189,7 +213,8 @@ void test_strtrim_1() {
     //printf("[%s]\n", res->str);
 }
 
-void test_buf_0() {
+void test_buf_0()
+{
     Cbuffer * buf = ccbuf_new("");
     axTEST(buf->size == 0);
 
@@ -197,7 +222,8 @@ void test_buf_0() {
     axTEST(c == HC_FEOF);
 }
 
-void test_buf_1() {
+void test_buf_1()
+{
     Cbuffer * buf = ccbuf_new("abc");
     axTEST(buf->size == 3);
 
@@ -207,7 +233,8 @@ void test_buf_1() {
     axTEST(nextc(buf) == HC_FEOF);
 }
 
-void test_buf_2() {
+void test_buf_2()
+{
     Cbuffer * buf = ccbuf_new("a\\\nb\\\nc");
 
     axTEST(nextc(buf) == 'a');
@@ -216,7 +243,8 @@ void test_buf_2() {
     axTEST(nextc(buf) == HC_FEOF);
 }
 
-void test_buf_3() {
+void test_buf_3()
+{
     size_t s = 0;
     char * source = readfile("main.c", &s);
     Cbuffer * buf = ccbuf_new(source);
@@ -229,7 +257,8 @@ void test_buf_3() {
     }
 }
 
-void test_strmid_again() {
+void test_strmid_again()
+{
     axTEST(streq(sb_mid(sb_news("3f420a10-5465-"), 4, 9)->str, "0a10-5465"));
     axTEST(streq(sb_mid(sb_news("f8535dba-8cfa-"), 5, 9)->str, "dba-8cfa-"));
     axTEST(streq(sb_mid(sb_news("0b9edb1c-b2bb-"), 0, 6)->str, "0b9edb"));
@@ -271,7 +300,8 @@ struct token_simple {
     int flag;
 };
 
-struct token_simple * token_simple_new(char *name, int type, int flag) {
+struct token_simple * token_simple_new(char *name, int type, int flag)
+{
     struct token_simple * rv = cc_malloc(sizeof(struct token_simple));
     rv->value = cc_strdup(name);
     rv->type = type;
@@ -279,7 +309,8 @@ struct token_simple * token_simple_new(char *name, int type, int flag) {
     return rv;
 }
 
-bool token_simple_equal(void *a, void *b) {
+bool token_simple_equal(void *a, void *b)
+{
 
     struct token_simple * first = (struct token_simple*) a;
     struct token_simple * second = (struct token_simple*) b;
@@ -296,16 +327,19 @@ bool token_simple_equal(void *a, void *b) {
     return true;
 }
 
-size_t token_simple_hash(void * elem) {
+size_t token_simple_hash(void * elem)
+{
     size_t ptr_hash_size = *((size_t*) elem);
     return ptr_hash_size;
 }
 
-void token_simple_print(struct token_simple * elem, char * val) {
+void token_simple_print(struct token_simple * elem, char * val)
+{
     printf("value=%s, type=%d, flag=%d; valmap=%s\n", elem->value, elem->type, elem->flag, val);
 }
 
-void test_hashmap_pointers_1() {
+void test_hashmap_pointers_1()
+{
     HashMap * map = HashMap_new(&token_simple_hash, &token_simple_equal);
 
     struct token_simple * a1 = token_simple_new("a", 0, 1);
@@ -330,7 +364,8 @@ void test_hashmap_pointers_1() {
 //    }
 }
 
-void test_hashmap_str_1() {
+void test_hashmap_str_1()
+{
     HashMap * map = HashMap_new_str();
     HashMap_add(map, "1", "1");
     HashMap_add(map, "2", "2");
@@ -346,8 +381,9 @@ void test_hashmap_str_1() {
     axTEST(streq(HashMap_get(map, "1"), "0"));
 }
 
-void test_split_char_1() {
-    StrBuilder *input = sb_news("src/test/inlude/my/folder/to/std/headers/");
+void test_split_char_1()
+{
+    StringBuilder *input = sb_news("src/test/inlude/my/folder/to/std/headers/");
     LinkedList * lines = sb_split_char(input, '/', false);
     for (ListNode * node = lines->first; node; node = node->next) {
         char *str = (char*) node->e;
@@ -355,7 +391,16 @@ void test_split_char_1() {
     }
 }
 
-int main(void) {
+void test_replace_0()
+{
+    StringBuilder * where = sb_news("illidiance");
+    char * olds = "illi";
+    char * news = ".";
+    axTEST(streq(sb_replace(where, olds, news)->str, ".diance"));
+}
+
+int main(void)
+{
 
     test_buf_0();
     test_buf_1();
@@ -391,6 +436,7 @@ int main(void) {
     test_hashmap_str_1();
 
     test_split_char_1();
+    test_replace_0();
 
     printf("\n:ok:\n");
     return 0;

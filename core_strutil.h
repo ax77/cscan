@@ -4,24 +4,25 @@
 #include "cheaders.h"
 #include "core_list.h"
 
-typedef struct strbuilder StrBuilder;
+typedef struct strbuilder StringBuilder;
 
 struct strbuilder {
     size_t len, alloc;
     char *str;
 };
 
-StrBuilder *sb_new();
-StrBuilder *sb_news(char * str);
-void sb_addc(StrBuilder *s, char c);
-void sb_adds(StrBuilder *s, char *news);
-StrBuilder *sb_copy(StrBuilder *what);
-StrBuilder *sb_left(StrBuilder *from, size_t much);
-StrBuilder *sb_right(StrBuilder *from, size_t much);
-StrBuilder *sb_mid(StrBuilder *from, size_t begin, size_t much);
-StrBuilder *sb_trim(StrBuilder *from);
+StringBuilder *sb_new();
+StringBuilder *sb_news(char * str);
+void sb_addc(StringBuilder *s, char c);
+void sb_adds(StringBuilder *s, char *news);
+StringBuilder *sb_copy(StringBuilder *what);
+StringBuilder *sb_left(StringBuilder *from, size_t much);
+StringBuilder *sb_right(StringBuilder *from, size_t much);
+StringBuilder *sb_mid(StringBuilder *from, size_t begin, size_t much);
+StringBuilder *sb_trim(StringBuilder *from);
 
-LinkedList * sb_split_char(StrBuilder * where, char sep, bool include_empty); // list_of(char*)
+LinkedList * sb_split_char(StringBuilder * where, char sep, bool include_empty); // list_of(char*)
+StringBuilder * sb_replace(StringBuilder * input, char *pattern, char *replacement);
 
 int strstarts(char *what, char *with);
 int strends(char *what, char *with);
