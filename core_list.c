@@ -1,25 +1,32 @@
 #include "core_list.h"
 
-LinkedList * list_new() {
+LinkedList * list_new(list_equal_fn equal_fn)
+{
+    assert(equal_fn);
+
     LinkedList *list = malloc(sizeof(LinkedList));
     assert(list && "list malloc");
 
     list->first = list->last = NULL;
     list->size = 0;
+
+    list->equal_fn = equal_fn;
     return list;
 }
 
-ListNode * list_node_new(ListNode *prev, void *e, ListNode *next) {
+ListNode * list_node_new(ListNode *prev, void *e, ListNode *next)
+{
     ListNode *node = malloc(sizeof(ListNode));
     assert(node && "node malloc");
     node->prev = prev;
-    node->e = e;
+    node->item = e;
     node->next = next;
     return node;
 }
 
 //__attribute__((always_inline))
-void list_push_front(LinkedList *list, void *e) {
+void list_push_front(LinkedList *list, void *e)
+{
     ListNode *f = list->first;
     ListNode *n = list_node_new(NULL, e, f);
     list->first = n;
@@ -32,7 +39,8 @@ void list_push_front(LinkedList *list, void *e) {
 }
 
 //__attribute__((always_inline))
-void list_push_back(LinkedList *list, void *e) {
+void list_push_back(LinkedList *list, void *e)
+{
     ListNode *l = list->last;
     ListNode *n = list_node_new(l, e, NULL);
     list->last = n;
@@ -46,11 +54,12 @@ void list_push_back(LinkedList *list, void *e) {
 
 // TODO: free unlinked
 
-void * list_pop_front(LinkedList *list) {
+void * list_pop_front(LinkedList *list)
+{
     ListNode *f = list->first;
     assert(f);
 
-    void *elem = f->e;
+    void *elem = f->item;
 
     ListNode *next = f->next;
     list->first = next;
@@ -66,11 +75,12 @@ void * list_pop_front(LinkedList *list) {
 
 // TODO: free unlinked
 
-void * list_pop_back(LinkedList *list) {
+void * list_pop_back(LinkedList *list)
+{
     ListNode *l = list->last;
     assert(l);
 
-    void *elem = l->e;
+    void *elem = l->item;
 
     ListNode *prev = l->prev;
     list->last = prev;
@@ -84,7 +94,8 @@ void * list_pop_back(LinkedList *list) {
     return elem;
 }
 
-ListNode *list_get_node(LinkedList *list, size_t index) {
+ListNode *list_get_node(LinkedList *list, size_t index)
+{
 
     assert(index < list->size);
 
@@ -103,27 +114,128 @@ ListNode *list_get_node(LinkedList *list, size_t index) {
     }
 }
 
-void * list_get(LinkedList *list, size_t at_index) {
+void * list_get(LinkedList *list, size_t at_index)
+{
     assert(at_index < list->size);
     ListNode *x = list_get_node(list, at_index);
-    return x->e;
+    return x->item;
 }
 
-void * list_set(LinkedList *list, size_t at_index, void *element) {
+void * list_set(LinkedList *list, size_t at_index, void *element)
+{
     assert(at_index < list->size);
     ListNode *x = list_get_node(list, at_index);
 
-    void *old = x->e;
-    x->e = element;
+    void *old = x->item;
+    x->item = element;
     return old;
 }
 
-int list_is_empty(LinkedList *list) {
+int list_is_empty(LinkedList *list)
+{
     return list->size == 0;
 }
 
-size_t list_size(LinkedList *list) {
+size_t list_size(LinkedList *list)
+{
     assert(list);
     return list->size;
+}
+
+//E unlink(Node<E> x) {
+//    // assert x != null;
+//    final E element = x.item;
+//    final Node<E> next = x.next;
+//    final Node<E> prev = x.prev;
+//
+//    if (prev == null) {
+//        first = next;
+//    } else {
+//        prev.next = next;
+//        x.prev = null;
+//    }
+//
+//    if (next == null) {
+//        last = prev;
+//    } else {
+//        next.prev = prev;
+//        x.next = null;
+//    }
+//
+//    x.item = null;
+//    size--;
+//    modCount++;
+//    return element;
+//}
+
+static void *list_unlink(LinkedList *list, ListNode *x)
+{
+    assert(list);
+    assert(x);
+
+    void *element = x->item;
+    ListNode *next = x->next;
+    ListNode *prev = x->prev;
+
+    if (prev == NULL) {
+        list->first = next;
+    } else {
+        prev->next = next;
+        x->prev = NULL;
+    }
+
+    if (next == NULL) {
+        list->last = prev;
+    } else {
+        next->prev = prev;
+        x->next = NULL;
+    }
+
+    x->item = NULL;
+    list->size -= 1;
+
+    return element;
+
+}
+
+//    public boolean remove(Object o) {
+//        if (o == null) {
+//            for (Node<E> x = first; x != null; x = x.next) {
+//                if (x.item == null) {
+//                    unlink(x);
+//                    return true;
+//                }
+//            }
+//        } else {
+//            for (Node<E> x = first; x != null; x = x.next) {
+//                if (o.equals(x.item)) {
+//                    unlink(x);
+//                    return true;
+//                }
+//            }
+//        }
+//        return false;
+//    }
+
+void * list_remove(LinkedList *list, void *o)
+{
+    assert(list);
+    assert(list->equal_fn);
+
+    if (o == NULL) {
+        for (ListNode * x = list->first; x != NULL; x = x->next) {
+            if (x->item == NULL) {
+                return list_unlink(list, x);
+            }
+        }
+    } else {
+        for (ListNode * x = list->first; x != NULL; x = x->next) {
+            if (list->equal_fn(x->item, o)) { // o.equals(x.item)
+                return list_unlink(list, x);
+            }
+        }
+    }
+
+    return NULL;
 }
 

@@ -208,9 +208,16 @@ static void sb_free(StringBuilder ** sb)
     }
 }
 
+static bool strequal(void *a, void *b)
+{
+    char *str_1 = (char*) a;
+    char *str_2 = (char*) b;
+    return strcmp(str_1, str_2) == 0;
+}
+
 LinkedList * sb_split_char(StringBuilder * where, char sep, bool include_empty)
 {
-    LinkedList * lines = list_new();
+    LinkedList * lines = list_new(strequal);
     size_t len = where->len;
 
     if (len == 0) {

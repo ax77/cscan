@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <assert.h>
-#include <time.h>
+#include <stdbool.h>
 
 // simple, but fast double linked list, rewritten from JDK.
 // why [void*] instead of macros?
@@ -23,17 +23,21 @@
 
 typedef struct linked_list LinkedList;
 typedef struct list_node ListNode;
+typedef bool (*list_equal_fn)(void* a, void* b);
+
+struct list_node {
+    void *item;
+    struct list_node *prev;
+    struct list_node *next;
+};
 
 struct linked_list {
-    struct list_node {
-        void *e;
-        struct list_node *prev;
-        struct list_node *next;
-    }*first, *last;
+    struct list_node *first, *last;
+    list_equal_fn equal_fn;
     size_t size;
 };
 
-LinkedList * list_new(void);
+LinkedList * list_new(list_equal_fn equal_fn);
 ListNode * list_node_new(ListNode *prev, void *e, ListNode *next);
 ListNode * list_get_node(LinkedList *list, size_t index);
 
@@ -45,5 +49,6 @@ void * list_pop_front(LinkedList *list);
 void * list_pop_back(LinkedList *list);
 void * list_get(LinkedList *list, size_t at_index);
 void * list_set(LinkedList *list, size_t at_index, void *element);
+void * list_remove(LinkedList *list, void *o);
 
 #endif /* CORE_LIST_H_ */

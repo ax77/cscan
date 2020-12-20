@@ -387,7 +387,7 @@ void test_split_char_1()
     StringBuilder *input = sb_news("src/test/inlude/my/folder/to/std/headers/");
     LinkedList * lines = sb_split_char(input, '/', false);
     for (ListNode * node = lines->first; node; node = node->next) {
-        char *str = (char*) node->e;
+        char *str = (char*) node->item;
         assert(str);
     }
 }
@@ -409,7 +409,34 @@ void test_array_0()
         array_add(arr, cc_strdup(buf));
     }
     for (size_t i = 0; i < arr->size; i++) {
-        printf("%s\n", (char*) array_get(arr, i));
+        //printf("%s\n", (char*) array_get(arr, i));
+    }
+}
+
+static bool strequal(void *a, void *b)
+{
+    char *str_1 = (char*) a;
+    char *str_2 = (char*) b;
+    return strcmp(str_1, str_2) == 0;
+}
+
+
+void test_list_remove_0()
+{
+    LinkedList *list = list_new(strequal);
+    char *a = "a";
+    char *b = "b";
+    char *c = "c";
+
+    list_push_back(list, a);
+    list_push_back(list, b);
+    list_push_back(list, c);
+
+    list_remove(list, b);
+
+    for (ListNode *x = list->first; x; x = x->next) {
+        char *str = (char*) x->item;
+        printf("%s\n", str);
     }
 }
 
@@ -453,6 +480,7 @@ int main(void)
     test_replace_0();
 
     test_array_0();
+    test_list_remove_0();
 
     printf("\n:ok:\n");
     return 0;
