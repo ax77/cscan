@@ -12,6 +12,7 @@
 #include "core_file.h"
 #include "core_mem.h"
 #include "core_array.h"
+#include "uuid4gen.h"
 
 #define axTEST(expr) do {\
   if( !(expr) ) {\
@@ -420,7 +421,6 @@ static bool strequal(void *a, void *b)
     return strcmp(str_1, str_2) == 0;
 }
 
-
 void test_list_remove_0()
 {
     LinkedList *list = list_new(strequal);
@@ -481,6 +481,12 @@ int main(void)
 
     test_array_0();
     test_list_remove_0();
+
+    char buf[64];
+    for (int i = 0; i < 10; i += 1) {
+        uuid4gen(buf);
+        printf("%s\n", buf);
+    }
 
     printf("\n:ok:\n");
     return 0;
