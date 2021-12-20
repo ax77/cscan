@@ -440,6 +440,7 @@ void test_list_remove_0()
     }
 }
 
+#if 0 // work with strtoX
 int main(void)
 {
 
@@ -491,4 +492,5 @@ int main(void)
     printf("\n:ok:\n");
     return 0;
 }
+#endif
 
