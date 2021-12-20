@@ -6,8 +6,12 @@
 #include <limits.h>
 #include <string.h>
 #include <stdarg.h>
-
 #include <math.h>
+
+#include "core_ascii.h"
+#include "core_buf.h"
+#include "core_mem.h"
+#include "core_strutil.h"
 
 //////////////////////////////////////////////////////////////////////
 // TODO: rust suffixes https://doc.rust-lang.org/reference/tokens.html:
@@ -148,148 +152,6 @@
 // 1.5e_1       // invalid: _ must separate successive digits
 // 1.5e1_       // invalid: _ must separate successive digits
 
-#define HC_FEOF (-1)
-
-static void die(const char *fmt, ...)
-{
-    va_list args;
-    static char buffer[512];
-
-    va_start(args, fmt);
-    vsnprintf(buffer, sizeof(buffer), fmt, args);
-    va_end(args);
-
-    fprintf(stderr, "%s\n", buffer);
-    exit(1);
-}
-
-static void* cstrtox_malloc(size_t size)
-{
-    assert(size);
-    assert(size <= INT_MAX);
-
-    void *ret = NULL;
-    ret = malloc(size);
-    if (ret == NULL) {
-        ret = malloc(size);
-        if (ret == NULL) {
-            ret = malloc(size);
-        }
-    }
-    assert(ret);
-    return ret;
-}
-
-static void* cstrtox_realloc(void *ptr, size_t newsize)
-{
-    assert(newsize);
-    assert(newsize <= INT_MAX);
-
-    void *ret = NULL;
-    ret = realloc(ptr, newsize);
-    if (ret == NULL) {
-        ret = realloc(ptr, newsize);
-        if (ret == NULL) {
-            ret = realloc(ptr, newsize);
-        }
-    }
-    assert(ret);
-    return ret;
-}
-
-/// string routine, dynamic buffer, with a bunch of simple functions
-
-struct cstrtox_buf {
-    size_t len, alloc, offset;
-    char *buffer;
-};
-
-void cstrtox_buf_adds(struct cstrtox_buf *buf, char *s);
-
-struct cstrtox_buf* cstrtox_buf_new()
-{
-    struct cstrtox_buf *rv = cstrtox_malloc(sizeof(struct cstrtox_buf));
-    rv->len = 0;
-    rv->alloc = 8;
-    rv->offset = 0;
-    rv->buffer = cstrtox_malloc(rv->alloc * sizeof(char));
-    for (size_t i = 0; i < rv->alloc; i += 1) {
-        rv->buffer[i] = '\0';
-    }
-    return rv;
-}
-
-struct cstrtox_buf* cstrtox_buf_news(char *s)
-{
-    assert(s);
-    struct cstrtox_buf *buf = cstrtox_buf_new();
-    cstrtox_buf_adds(buf, s);
-    return buf;
-}
-
-void cstrtox_buf_free(struct cstrtox_buf **buf)
-{
-    assert(*buf);
-
-    free((*buf)->buffer);
-    (*buf)->buffer = NULL;
-
-    (*buf)->len = 0;
-    (*buf)->alloc = 0;
-    (*buf)->offset = 0;
-
-    free(*buf);
-    *buf = NULL;
-}
-
-void cstrtox_buf_addc(struct cstrtox_buf *buf, char c)
-{
-    assert(buf && buf->buffer);
-    if (!c) {
-        return;
-    }
-    if (buf->len >= buf->alloc) {
-        buf->alloc += 1;
-        buf->alloc *= 2;
-        buf->buffer = cstrtox_realloc(buf->buffer, buf->alloc * sizeof(char));
-    }
-    buf->buffer[buf->len++] = c;
-    buf->buffer[buf->len] = '\0';
-}
-
-void cstrtox_buf_adds(struct cstrtox_buf *buf, char *s)
-{
-    assert(buf && buf->buffer);
-    assert(s);
-    for (size_t i = 0; s[i]; i += 1) {
-        cstrtox_buf_addc(buf, s[i]);
-    }
-}
-
-static int nextc(struct cstrtox_buf *buf)
-{
-    assert(buf && buf->buffer);
-    if (buf->offset >= buf->len) {
-        return -1;
-    }
-    return buf->buffer[buf->offset++];
-}
-
-static int peekc(struct cstrtox_buf *buf)
-{
-    assert(buf && buf->buffer);
-    if (buf->offset >= buf->len) {
-        return -1;
-    }
-    return buf->buffer[buf->offset];
-}
-
-int cstrtox_buf_is_empty(struct cstrtox_buf *buf)
-{
-    assert(buf && buf->buffer);
-    return buf->len == 0;
-}
-
 /// the main routine, here we need to parse the buffer,
 /// get all the information from it, and interpret the result.
 
@@ -324,10 +186,10 @@ struct cstrtox_parse_data {
     // 4) hex form: 0xabcde
     // 5) floats: .032, 072.40, 3.14, 2.22750742e+4f, 0x1.68fcp+14
 
-    struct cstrtox_buf *dec;
-    struct cstrtox_buf *mnt;
-    struct cstrtox_buf *exp;
-    struct cstrtox_buf *suf; // C/C++ suffix: UL, ULL, etc.
+    struct strbuilder *dec;
+    struct strbuilder *mnt;
+    struct strbuilder *exp;
+    struct strbuilder *suf; // C/C++ suffix: UL, ULL, etc.
     char sig; // exponent sign [+][-]
 
     // it's a floating point constant in its exponent form
@@ -376,16 +238,16 @@ struct cstrtox_parse_data* cstrtox_parse_data_new(char *input)
 {
     assert(input);
 
-    struct cstrtox_parse_data *rv = cstrtox_malloc(sizeof(struct cstrtox_parse_data));
+    struct cstrtox_parse_data *rv = cc_malloc(sizeof(struct cstrtox_parse_data));
 
     rv->input = input;
     rv->eval_flag = E_ERROR;
     rv->num_type = N_ERROR;
 
-    rv->dec = cstrtox_buf_new();
-    rv->mnt = cstrtox_buf_new();
-    rv->exp = cstrtox_buf_new();
-    rv->suf = cstrtox_buf_new();
+    rv->dec = sb_new();
+    rv->mnt = sb_new();
+    rv->exp = sb_new();
+    rv->suf = sb_new();
     rv->sig = '+';
 
     rv->dec_float_exp = 0;
@@ -403,10 +265,10 @@ void cstrtox_print_data(struct cstrtox_parse_data *data)
     assert(data);
 
     printf("inp=%s\n", data->input);
-    printf("dec=%s\n", data->dec->buffer);
-    printf("mnt=%s\n", data->mnt->buffer);
-    printf("exp=%s\n", data->exp->buffer);
-    printf("suf=%s\n", data->suf->buffer);
+    printf("dec=%s\n", data->dec->str);
+    printf("mnt=%s\n", data->mnt->str);
+    printf("exp=%s\n", data->exp->str);
+    printf("suf=%s\n", data->suf->str);
     printf("sig=%c\n", data->sig);
     printf("EVF=%s\n", ev_flag_tos(data->eval_flag));
 
@@ -419,30 +281,6 @@ void cstrtox_print_data(struct cstrtox_parse_data *data)
     printf("f64=%f\n\n", data->f64);
 }
 
-static int is_dec(int c)
-{
-    return c == '0' || c == '1' || c == '2' || c == '3' || c == '4' || c == '5' || c == '6'
-            || c == '7' || c == '8' || c == '9';
-}
-
-static int is_hex(int c)
-{
-    return is_dec(c)
-            || (c == 'A' || c == 'B' || c == 'C' || c == 'D' || c == 'E' || c == 'F' || c == 'a'
-                    || c == 'b' || c == 'c' || c == 'd' || c == 'e' || c == 'f');
-}
-
-static int is_oct(int c)
-{
-    return c == '0' || c == '1' || c == '2' || c == '3' || c == '4' || c == '5' || c == '6'
-            || c == '7';
-}
-
-static int is_bin(int c)
-{
-    return c == '0' || c == '1';
-}
-
 static int is_int_f(int flag)
 {
     return (flag == E_BIN) || (flag == E_OCT) || (flag == E_DEC) || (flag == E_HEX);
@@ -451,141 +289,6 @@ static int is_int_f(int flag)
 static int is_float_f(int flag)
 {
     return (flag == E_DEC_FLOAT) || (flag == E_HEX_FLOAT);
-}
-
-static int char_correct_for_base(int C, int base)
-{
-    if (base == 16 && is_hex(C)) {
-        return 1;
-    }
-    if (base == 10 && is_dec(C)) {
-        return 1;
-    }
-    if (base == 8 && is_oct(C)) {
-        return 1;
-    }
-    if (base == 2 && is_bin(C)) {
-        return 1;
-    }
-    return 0;
-}
-
-static int char_value(int base, int c)
-{
-
-    int base_in_range = (base == 2) || (base == 8) || (base == 10) || (base == 16);
-    if (!base_in_range) {
-        die("error eval base = %d for char = %c\n", base, c);
-    }
-
-    if (base == 2) {
-        switch (c) {
-        case '0':
-            return 0;
-        case '1':
-            return 1;
-        default:
-            die("error eval base = %d for char = %c\n", base, c);
-        }
-    }
-
-    if (base == 8) {
-        switch (c) {
-        case '0':
-            return 0;
-        case '1':
-            return 1;
-        case '2':
-            return 2;
-        case '3':
-            return 3;
-        case '4':
-            return 4;
-        case '5':
-            return 5;
-        case '6':
-            return 6;
-        case '7':
-            return 7;
-        default:
-            die("error eval base = %d for char = %c\n", base, c);
-        }
-    }
-
-    if (base == 10) {
-        switch (c) {
-        case '0':
-            return 0;
-        case '1':
-            return 1;
-        case '2':
-            return 2;
-        case '3':
-            return 3;
-        case '4':
-            return 4;
-        case '5':
-            return 5;
-        case '6':
-            return 6;
-        case '7':
-            return 7;
-        case '8':
-            return 8;
-        case '9':
-            return 9;
-        default:
-            die("error eval base = %d for char = %c\n", base, c);
-        }
-    }
-
-    if (base == 16) {
-        switch (c) {
-        case '0':
-            return 0;
-        case '1':
-            return 1;
-        case '2':
-            return 2;
-        case '3':
-            return 3;
-        case '4':
-            return 4;
-        case '5':
-            return 5;
-        case '6':
-            return 6;
-        case '7':
-            return 7;
-        case '8':
-            return 8;
-        case '9':
-            return 9;
-        case 'a':
-        case 'A':
-            return 10;
-        case 'b':
-        case 'B':
-            return 11;
-        case 'c':
-        case 'C':
-            return 12;
-        case 'd':
-        case 'D':
-            return 13;
-        case 'e':
-        case 'E':
-            return 14;
-        case 'f':
-        case 'F':
-            return 15;
-        default:
-            die("error eval base = %d for char = %c\n", base, c);
-        }
-    }
-
-    die("error eval base = %d for char = %c\n", base, c);
-    return 0;
 }
 
 static void evalhexfloat(struct cstrtox_parse_data *data);
@@ -603,7 +306,7 @@ static void ev(struct cstrtox_parse_data *data)
 
     if (is_int_f(flag)) {
 
-        struct cstrtox_buf *buf = data->dec;
+        struct strbuilder *buf = data->dec;
         int base = 10;
         if (flag == E_BIN) {
             base = 2;
@@ -615,12 +318,12 @@ static void ev(struct cstrtox_parse_data *data)
             base = 16;
         }
 
-        int c = nextc(buf);
+        int c = sb_nextc(buf);
 
         long retval = 0;
         while (c != HC_FEOF && char_correct_for_base(c, base)) {
             retval = retval * base + char_value(base, c);
-            c = nextc(buf);
+            c = sb_nextc(buf);
         }
 
         //TODO: normal routine with overflow, etc.
@@ -646,18 +349,18 @@ static void ev(struct cstrtox_parse_data *data)
 static void evalhexfloat(struct cstrtox_parse_data *data)
 {
 
-    struct cstrtox_buf *decbuf = data->dec;
+    struct strbuilder *decbuf = data->dec;
 
     double realval = 0.0;
-    for (int c = nextc(decbuf); c != HC_FEOF; c = nextc(decbuf)) {
+    for (int c = sb_nextc(decbuf); c != HC_FEOF; c = sb_nextc(decbuf)) {
         realval = realval * 16.0 + (double) char_value(16, c);
     }
 
     if (data->mnt->len > 0) {
-        struct cstrtox_buf *mntbuf = data->mnt;
+        struct strbuilder *mntbuf = data->mnt;
 
         double m = 0.0625;
-        for (int c = nextc(mntbuf); c != HC_FEOF; c = nextc(mntbuf)) {
+        for (int c = sb_nextc(mntbuf); c != HC_FEOF; c = sb_nextc(mntbuf)) {
             realval = realval + (double) char_value(16, c) * m;
             m *= 0.0625;
         }
@@ -670,11 +373,11 @@ static void evalhexfloat(struct cstrtox_parse_data *data)
 
     if (data->exp->len > 0) {
 
-        struct cstrtox_buf *expbuf = data->exp;
+        struct strbuilder *expbuf = data->exp;
 
         //
         int pow = 0;
-        for (int c = nextc(expbuf); c != HC_FEOF; c = nextc(expbuf)) {
+        for (int c = sb_nextc(expbuf); c != HC_FEOF; c = sb_nextc(expbuf)) {
             pow = pow * 10 + (int) char_value(10, c);
         }
         //
@@ -699,19 +402,19 @@ static void evalhexfloat(struct cstrtox_parse_data *data)
 static void evaldecfloat(struct cstrtox_parse_data *data)
 {
 
-    struct cstrtox_buf *decbuf = data->dec;
+    struct strbuilder *decbuf = data->dec;
 
     double realval = 0.0;
 
-    for (int c = nextc(decbuf); c != HC_FEOF; c = nextc(decbuf)) {
+    for (int c = sb_nextc(decbuf); c != HC_FEOF; c = sb_nextc(decbuf)) {
         realval = realval * 10.0 + (double) char_value(10, c);
     }
 
     if (data->mnt->len > 0) {
-        struct cstrtox_buf *mntbuf = data->mnt;
+        struct strbuilder *mntbuf = data->mnt;
 
         double m = 0.1;
-        for (int c = nextc(mntbuf); c != HC_FEOF; c = nextc(mntbuf)) {
+        for (int c = sb_nextc(mntbuf); c != HC_FEOF; c = sb_nextc(mntbuf)) {
             realval = realval + (double) char_value(10, c) * m;
             m *= 0.1;
         }
@@ -724,10 +427,10 @@ static void evaldecfloat(struct cstrtox_parse_data *data)
 
     if (data->exp->len > 0) {
 
-        struct cstrtox_buf *expbuf = data->exp;
+        struct strbuilder *expbuf = data->exp;
 
         int pow = 0;
-        for (int c = nextc(expbuf); c != HC_FEOF; c = nextc(expbuf)) {
+        for (int c = sb_nextc(expbuf); c != HC_FEOF; c = sb_nextc(expbuf)) {
             pow = pow * 10 + (int) char_value(10, c);
         }
         double m = 1.0;
@@ -746,13 +449,13 @@ static void evaldecfloat(struct cstrtox_parse_data *data)
     data->f64 = (double) realval;
 }
 
-static void addc_ignore_underscore(struct cstrtox_buf *buf, char c)
+static void addc_ignore_underscore(struct strbuilder *buf, char c)
 {
-    assert(buf && buf->buffer);
+    assert(buf && buf->str);
     if (c == '_') {
         return;
     }
-    cstrtox_buf_addc(buf, c);
+    sb_addc(buf, c);
 }
 
 static int oct_only(char *where)
@@ -766,7 +469,7 @@ static int oct_only(char *where)
     return 1;
 }
 
-static int cut_exponent(int c, struct cstrtox_parse_data *data, struct cstrtox_buf *buf)
+static int cut_exponent(int c, struct cstrtox_parse_data *data, struct strbuilder *buf)
 {
     int is_dec_exp = (c == 'e' || c == 'E');
     int is_hex_exp = (c == 'p' || c == 'P');
@@ -782,14 +485,14 @@ static int cut_exponent(int c, struct cstrtox_parse_data *data, struct cstrtox_b
             data->eval_flag = E_HEX_FLOAT;
         }
 
-        c = nextc(buf); // skip [eEpP]
+        c = sb_nextc(buf); // skip [eEpP]
 
         // exponent sign is optional
         if (c == '-') {
-            c = nextc(buf);
+            c = sb_nextc(buf);
             data->sig = '-';
         } else if (c == '+') {
-            c = nextc(buf);
+            c = sb_nextc(buf);
             data->sig = '+';
         } else {
             data->sig = '+';
@@ -798,11 +501,11 @@ static int cut_exponent(int c, struct cstrtox_parse_data *data, struct cstrtox_b
         // exponent digits are NOT optional
 
         if (!is_dec(c)) {
-            die("exponent require decimal part: %s\n", data->input);
+            cc_fatal("exponent require decimal part: %s\n", data->input);
         }
 
-        for (; c != HC_FEOF && is_dec(c); c = nextc(buf)) {
-            cstrtox_buf_addc(data->exp, (char) c);
+        for (; c != HC_FEOF && is_dec(c); c = sb_nextc(buf)) {
+            sb_addc(data->exp, (char) c);
         }
     }
 
@@ -813,24 +516,24 @@ struct cstrtox_parse_data* parse_again(char *what)
 {
     assert(what && strlen(what));
 
-    struct cstrtox_buf *buf = cstrtox_buf_news(what);
+    struct strbuilder *buf = sb_news(what);
     struct cstrtox_parse_data *rv = cstrtox_parse_data_new(what);
 
-    int c = nextc(buf);
-    int nextchar = peekc(buf);
+    int c = sb_nextc(buf);
+    int nextchar = sb_peekc(buf);
 
     // 2
     if (c == '0' && (nextchar == 'b' || nextchar == 'B')) {
 
         rv->eval_flag = E_BIN;
-        c = nextc(buf); // skip [bB]
+        c = sb_nextc(buf); // skip [bB]
 
-        for (c = nextc(buf); is_bin(c) || c == '_'; c = nextc(buf)) {
+        for (c = sb_nextc(buf); is_bin(c) || c == '_'; c = sb_nextc(buf)) {
             addc_ignore_underscore(rv->dec, (char) c);
         }
 
-        for (; c != HC_FEOF; c = nextc(buf)) {
-            cstrtox_buf_addc(rv->suf, (char) c);
+        for (; c != HC_FEOF; c = sb_nextc(buf)) {
+            sb_addc(rv->suf, (char) c);
         }
 
     }
@@ -839,14 +542,14 @@ struct cstrtox_parse_data* parse_again(char *what)
     else if (c == '0' && (nextchar == 'o' || nextchar == 'O')) {
 
         rv->eval_flag = E_OCT;
-        c = nextc(buf); // skip [oO]
+        c = sb_nextc(buf); // skip [oO]
 
-        for (c = nextc(buf); is_oct(c) || c == '_'; c = nextc(buf)) {
+        for (c = sb_nextc(buf); is_oct(c) || c == '_'; c = sb_nextc(buf)) {
             addc_ignore_underscore(rv->dec, (char) c);
         }
 
-        for (; c != HC_FEOF; c = nextc(buf)) {
-            cstrtox_buf_addc(rv->suf, (char) c);
+        for (; c != HC_FEOF; c = sb_nextc(buf)) {
+            sb_addc(rv->suf, (char) c);
         }
 
     }
@@ -858,9 +561,9 @@ struct cstrtox_parse_data* parse_again(char *what)
     else if (c == '0' && (nextchar == 'x' || nextchar == 'X')) {
 
         rv->eval_flag = E_HEX;
-        c = nextc(buf); // skip [xX]
+        c = sb_nextc(buf); // skip [xX]
 
-        for (c = nextc(buf); is_hex(c) || c == '_'; c = nextc(buf)) {
+        for (c = sb_nextc(buf); is_hex(c) || c == '_'; c = sb_nextc(buf)) {
             addc_ignore_underscore(rv->dec, (char) c);
         }
 
@@ -871,8 +574,8 @@ struct cstrtox_parse_data* parse_again(char *what)
 
         if (c == '.') {
             rv->eval_flag = E_HEX_FLOAT;
-            for (c = nextc(buf); is_hex(c); c = nextc(buf)) {
-                cstrtox_buf_addc(rv->mnt, (char) c);
+            for (c = sb_nextc(buf); is_hex(c); c = sb_nextc(buf)) {
+                sb_addc(rv->mnt, (char) c);
             }
         }
 
@@ -880,8 +583,8 @@ struct cstrtox_parse_data* parse_again(char *what)
             c = cut_exponent(c, rv, buf);
         }
 
-        for (; c != HC_FEOF; c = nextc(buf)) {
-            cstrtox_buf_addc(rv->suf, (char) c);
+        for (; c != HC_FEOF; c = sb_nextc(buf)) {
+            sb_addc(rv->suf, (char) c);
         }
 
     }
@@ -893,16 +596,16 @@ struct cstrtox_parse_data* parse_again(char *what)
 
         rv->eval_flag = E_DEC_FLOAT;
 
-        for (c = nextc(buf); is_dec(c); c = nextc(buf)) {
-            cstrtox_buf_addc(rv->mnt, (char) c);
+        for (c = sb_nextc(buf); is_dec(c); c = sb_nextc(buf)) {
+            sb_addc(rv->mnt, (char) c);
         }
 
         if (c == 'e' || c == 'E') {
             c = cut_exponent(c, rv, buf);
         }
 
-        for (; c != HC_FEOF; c = nextc(buf)) {
-            cstrtox_buf_addc(rv->suf, (char) c);
+        for (; c != HC_FEOF; c = sb_nextc(buf)) {
+            sb_addc(rv->suf, (char) c);
         }
 
     }
@@ -927,15 +630,15 @@ struct cstrtox_parse_data* parse_again(char *what)
         rv->eval_flag = E_DEC;
         const int begin_with_zero = (c == '0');
 
-        for (; is_dec(c) || c == '_'; c = nextc(buf)) {
+        for (; is_dec(c) || c == '_'; c = sb_nextc(buf)) {
             addc_ignore_underscore(rv->dec, (char) c);
         }
 
         if (c == '.') {
             rv->eval_flag = E_DEC_FLOAT;
 
-            for (c = nextc(buf); is_dec(c); c = nextc(buf)) {
-                cstrtox_buf_addc(rv->mnt, (char) c);
+            for (c = sb_nextc(buf); is_dec(c); c = sb_nextc(buf)) {
+                sb_addc(rv->mnt, (char) c);
             }
         }
 
@@ -943,8 +646,8 @@ struct cstrtox_parse_data* parse_again(char *what)
             c = cut_exponent(c, rv, buf);
         }
 
-        for (; c != HC_FEOF; c = nextc(buf)) {
-            cstrtox_buf_addc(rv->suf, (char) c);
+        for (; c != HC_FEOF; c = sb_nextc(buf)) {
+            sb_addc(rv->suf, (char) c);
         }
 
         // here we will handle our corner case between octal literals and
@@ -953,7 +656,7 @@ struct cstrtox_parse_data* parse_again(char *what)
         // and there wasn't any dot or exponent, we may say it's an octal literal.
         if (begin_with_zero) {
 
-            if (rv->eval_flag == E_DEC && rv->dec->len > 1 && oct_only(rv->dec->buffer)) {
+            if (rv->eval_flag == E_DEC && rv->dec->len > 1 && oct_only(rv->dec->str)) {
                 rv->eval_flag = E_OCT;
             }
         }
@@ -961,7 +664,7 @@ struct cstrtox_parse_data* parse_again(char *what)
     }
 
     else {
-        die("unknown literal: [%s]\n", what);
+        cc_fatal("unknown literal: [%s]\n", what);
     }
 
     ev(rv);
@@ -1251,7 +954,7 @@ int main()
 //    size_t len = 0;
 //    ssize_t read;
 //
-//    struct cstrtox_buf *buf = cstrtox_buf_new();
+//    struct strbuilder *buf = sb_new();
 //
 //    fp = fopen("main.c", "r");
 //    if (fp == NULL)

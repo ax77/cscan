@@ -48,6 +48,7 @@ StringBuilder *sb_new()
     StringBuilder *rv = malloc(sizeof(StringBuilder));
     rv->len = 0;
     rv->alloc = 8;
+    rv->offset = 0;
     rv->str = malloc(rv->alloc * sizeof(char));
     rv->str[rv->len] = '\0';
     return rv;
@@ -355,3 +356,20 @@ StringBuilder * sb_replace(StringBuilder * input, char * pattern, char *replacem
     return sb;
 }
 
+int sb_nextc(struct strbuilder *buf)
+{
+    assert(buf && buf->str);
+    if (buf->offset >= buf->len) {
+        return -1;
+    }
+    return buf->str[buf->offset++];
+}
+
+int sb_peekc(struct strbuilder *buf)
+{
+    assert(buf && buf->str);
+    if (buf->offset >= buf->len) {
+        return -1;
+    }
+    return buf->str[buf->offset];
+}

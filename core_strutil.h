@@ -7,7 +7,7 @@
 typedef struct strbuilder StringBuilder;
 
 struct strbuilder {
-    size_t len, alloc;
+    size_t len, alloc, offset;
     char *str;
 };
 
@@ -23,6 +23,11 @@ StringBuilder *sb_trim(StringBuilder *from);
 
 LinkedList * sb_split_char(StringBuilder * where, char sep, bool include_empty); // list_of(char*)
 StringBuilder * sb_replace(StringBuilder * input, char *pattern, char *replacement);
+
+// when we have to iterate over characters
+// and save the state
+int sb_nextc(struct strbuilder *buf);
+int sb_peekc(struct strbuilder *buf);
 
 int strstarts(char *what, char *with);
 int strends(char *what, char *with);
