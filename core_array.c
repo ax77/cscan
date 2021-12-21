@@ -66,3 +66,9 @@ void array_dummy_free_fn(void *ptr)
 
 }
 
+int array_is_empty(ArrayList *array)
+{
+    assert(array);
+    return array->size == 0;
+}
+

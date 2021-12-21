@@ -14,7 +14,6 @@
 #include "hashmap.h"
 #include "core_unittests.h"
 #include "core_mem.h"
-#include "core_list.h"
 #include "core_array.h"
 
 #define __READ_RBP() __asm__ volatile("movq %%rbp, %0" : "=r"(__rbp))
@@ -25,9 +24,17 @@ intptr_t * __rsp;
 intptr_t * __stackBegin;
 
 static HashMap *heap = NULL;
+
+static const size_t GC_MEGABYTE = 1024 * 1024;
+
 static size_t ALLOCATED = 0;
-static const size_t LIMIT = 132; // (1024 * 1024) * 8; // when do we need run gc
+static const size_t LIMIT = GC_MEGABYTE; // (1024 * 1024) * 8; // when do we need run gc
 static size_t TOTALLY_ALLOCATED = 0;
+static size_t GC_INVOKED = 0;
+static size_t MARK_MSEC = 0;
+static size_t SWEEP_MSEC = 0;
+
+#define CHECK_HARD_IS_EXISTS(ptr) cc_assert_true(HashMap_get(heap, ptr))
 
 static void gcInit()
 {
@@ -60,26 +67,36 @@ struct gc_memory {
     char *location; // debug
 };
 
-static LinkedList *getRoots();
-static LinkedList *getPointers(struct gc_memory *mem);
+static ArrayList *get_roots();
+static ArrayList *get_pointers(struct gc_memory *mem);
 static void mark();
 static void sweep();
 static void free_mem(struct gc_memory **mem);
 static void heap_print();
 
-static void run_gc()
+static void run_gc(const char *_file, const char *_func, int _line)
 {
+    GC_INVOKED += 1;
+
     printf("\n----------------------------------------------------------------------\n");
-    printf("\nBEFORE RUNNING GC\n");
+    printf("\nBEFORE RUNNING GC from: %s: %s: %d\n", _file, _func, _line);
     heap_print();
 
+    /// MARK
+
+    clock_t before_mark = clock();
     printf("\nAFTER MARK\n");
     mark();
     heap_print();
+    MARK_MSEC += (clock() - before_mark) * 1000 / CLOCKS_PER_SEC;
 
+    /// SWEEP
+
+    clock_t before_sweep = clock();
     printf("\nAFTER SWEEP\n");
     sweep();
     heap_print();
+    SWEEP_MSEC += (clock() - before_sweep) * 1000 / CLOCKS_PER_SEC;
 }
 
 #define alloc_mem(size) alloc_mem_internal(size, __FILE__, __func__, __LINE__)
@@ -101,7 +118,7 @@ static void *alloc_mem_internal(size_t size, const char *_file, const char *_fun
 
     /// XXX: I'm not sure how to do this properly...
     if (ALLOCATED >= LIMIT) {
-        run_gc();
+        run_gc(_file, _func, _line);
     }
     ALLOCATED += size;
     TOTALLY_ALLOCATED += size;
@@ -137,11 +154,10 @@ static int ptr_eq(void *a, void *b)
     return a == b;
 }
 
-static LinkedList *getRoots()
+static ArrayList *get_roots()
 {
-    /// roots finder
 
-    LinkedList *roots = list_new(ptr_eq);
+    ArrayList *result = array_new(&array_dummy_free_fn);
 
     jmp_buf jb;
     setjmp(jb);
@@ -162,18 +178,18 @@ static LinkedList *getRoots()
 
         struct gc_memory *mem = HashMap_get(heap, address);
         if (mem) {
-            list_push_back(roots, mem);
+            array_add(result, mem);
         }
 
         rsp++;
     }
 
-    return roots;
+    return result;
 }
 
-static LinkedList *getPointers(struct gc_memory *mem)
+static ArrayList *get_pointers(struct gc_memory *mem)
 {
-    LinkedList *result = list_new(ptr_eq);
+    ArrayList *result = array_new(&array_dummy_free_fn);
 
     uint8_t *p = mem->ptr;
     uint8_t *end = p + mem->size;
@@ -188,7 +204,7 @@ static LinkedList *getPointers(struct gc_memory *mem)
 
         struct gc_memory *mem = HashMap_get(heap, address);
         if (mem) {
-            list_push_back(result, mem);
+            array_add(result, mem);
         }
 
         p++;
@@ -200,18 +216,22 @@ static LinkedList *getPointers(struct gc_memory *mem)
 static void mark()
 {
 
-    LinkedList *worklist = getRoots();
-    while (!list_is_empty(worklist)) {
-        struct gc_memory *mem = list_pop_back(worklist);
+    ArrayList *worklist = get_roots();
+
+    while (!array_is_empty(worklist)) {
+        struct gc_memory *mem = array_pop_back(worklist);
         if (!mem->marked) {
             mem->marked = 1;
-            LinkedList *pointers = getPointers(mem);
-            for (ListNode * node = pointers->first; node; node = node->next) {
-                struct gc_memory *ptr = (struct gc_memory *) node->item;
-                list_push_back(worklist, ptr);
+            ArrayList *pointers = get_pointers(mem);
+            for (size_t i = 0; i < pointers->size; i += 1) {
+                struct gc_memory *ptr = (struct gc_memory *) array_get(pointers, i);
+                array_add(worklist, ptr);
             }
+            array_free(pointers);
         }
     }
+
+    array_free(worklist);
 }
 
 static void sweep()
@@ -257,7 +277,7 @@ static void heap_print()
         }
         for (; e; e = e->next) {
             struct gc_memory *mem = (struct gc_memory *) e->val;
-            printf("%lu:%lu:%s:%-4lu:%s\n", (size_t) e->key, (size_t) e->val,
+            printf("%lu:%lu:%s:%8lu:%s\n", (size_t) e->key, (size_t) e->val,
                     (mem->marked ? "V" : " "), mem->size, mem->location);
         }
     }
@@ -265,13 +285,21 @@ static void heap_print()
 
 void * getstrmem()
 {
-    void *str1 = alloc_mem(8);
-    void *str2 = alloc_mem(8);
-    void *str3 = alloc_mem(8);
-    void *str4 = alloc_mem(8);
-    void *str5 = alloc_mem(8);
-    void *str6 = alloc_mem(8);
-    void *str7 = alloc_mem(8);
+    void *str1 = alloc_mem(1);
+    void *str2 = alloc_mem(2);
+    void *str3 = alloc_mem(3);
+    void *str4 = alloc_mem(4);
+    void *str5 = alloc_mem(5);
+    void *str6 = alloc_mem(6);
+    void *str7 = alloc_mem(7);
+
+    CHECK_HARD_IS_EXISTS(str1);
+    CHECK_HARD_IS_EXISTS(str2);
+    CHECK_HARD_IS_EXISTS(str3);
+    CHECK_HARD_IS_EXISTS(str4);
+    CHECK_HARD_IS_EXISTS(str5);
+    CHECK_HARD_IS_EXISTS(str6);
+    CHECK_HARD_IS_EXISTS(str7);
 
     return str1;
 }
@@ -279,13 +307,40 @@ void * getstrmem()
 char* anotherfn()
 {
     char *str = alloc_mem(128);
+    CHECK_HARD_IS_EXISTS(str);
     return str;
 }
 
-void runintime()
+void dummy1()
+{
+    char *ptr = alloc_mem(12);
+    CHECK_HARD_IS_EXISTS(ptr);
+}
+
+void dummy2()
+{
+    char *ptr = alloc_mem(1212);
+    CHECK_HARD_IS_EXISTS(ptr);
+}
+
+void dummy4(void *ptr)
+{
+    ptr = alloc_mem(10);
+}
+
+void dummy3()
+{
+    char *ptr = alloc_mem(121212);
+    CHECK_HARD_IS_EXISTS(ptr);
+    dummy4(ptr);
+}
+
+void * runintime()
 {
     int msec = 0, trigger = 1000 * 5; /* 1000 * sec */
     clock_t before = clock();
+
+    void *ptr = NULL;
 
     do {
         /*
@@ -293,13 +348,15 @@ void runintime()
          * Be sure this code will not take more than `trigger` ms
          */
 
-        void *ptr = alloc_mem(32768);
+        ptr = alloc_mem(32768);
+        CHECK_HARD_IS_EXISTS(ptr);
 
         clock_t difference = clock() - before;
         msec = difference * 1000 / CLOCKS_PER_SEC;
     } while (msec < trigger);
 
     printf("Time taken %d seconds %d milliseconds\n", msec / 1000, msec % 1000);
+    return ptr;
 }
 
 void test_array()
@@ -325,19 +382,65 @@ void test_array()
     array_free(arr);
 }
 
+void empty()
+{
+    void *xxx = alloc_mem(3030);
+    CHECK_HARD_IS_EXISTS(xxx);
+}
+
+void test_loop_another(void *ptr)
+{
+    CHECK_HARD_IS_EXISTS(ptr);
+}
+
+void test_loop()
+{
+    for (size_t i = 0; i < 1024; i += 1) {
+        void *ptr = alloc_mem(32768);
+        CHECK_HARD_IS_EXISTS(ptr);
+        test_loop_another(ptr);
+    }
+}
+
+void print_stat()
+{
+
+    printf("\nTOTALLY_ALLOCATED %lu bytes, %lu Kb, %lu Mb\n", TOTALLY_ALLOCATED,
+            TOTALLY_ALLOCATED / 1024, TOTALLY_ALLOCATED / 1024 / 1024);
+
+    printf("GC_INVOKED %lu times\n", GC_INVOKED);
+
+    printf("MARK sec:%lu msec:%lu\n", MARK_MSEC / 1000, MARK_MSEC % 1000);
+
+    printf("SWEEP sec:%lu msec:%lu\n", SWEEP_MSEC / 1000, SWEEP_MSEC % 1000);
+}
+
 int do_main(int argc, char **argv)
 {
     heap = HashMap_new(ptr_hash, ptr_eq);
     ALLOCATED = 0;
-    //runintime();
+    TOTALLY_ALLOCATED = 0;
+    GC_INVOKED = 0;
+    MARK_MSEC = 0;
+    SWEEP_MSEC = 0;
 
+    test_loop();
+
+    //void *xxxxx = runintime();
     //test_array();
 
 //    anotherfn();
 //    char*str = anotherfn();
 //    void*ptr = getstrmem();
+//    dummy1();
+//    dummy2();
+//    dummy3();
+//    empty();
+//
+//    cc_assert_true(HashMap_get(heap, str));
+//    cc_assert_true(HashMap_get(heap, ptr));
 
-    printf("\nTOTALLY_ALLOCATED %lu Mb\n", TOTALLY_ALLOCATED / 1024 / 1024);
+    print_stat();
     printf("\n:ok:\n");
     return 0;
 }

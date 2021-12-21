@@ -18,5 +18,6 @@ void *array_get(ArrayList *array, size_t at_index);
 void *array_pop_back(ArrayList *array);
 void array_free(ArrayList *array);
 void array_dummy_free_fn(void *ptr);
+int array_is_empty(ArrayList *array);
 
 #endif /* CORE_ARRAY_H_ */
