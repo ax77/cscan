@@ -912,6 +912,7 @@ static void tests()
 
 }
 
+#if 0
 int main()
 {
     tests();
@@ -947,6 +948,7 @@ int main()
     printf("\n:ok:\n");
     return 0;
 }
+#endif
 
 //int main_____(void) {
 //    FILE *fp;

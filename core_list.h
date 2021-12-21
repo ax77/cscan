@@ -23,7 +23,7 @@
 
 typedef struct linked_list LinkedList;
 typedef struct list_node ListNode;
-typedef bool (*list_equal_fn)(void* a, void* b);
+typedef int (*list_equal_fn)(void* a, void* b);
 
 struct list_node {
     void *item;

@@ -9,7 +9,7 @@ typedef struct hashmap HashMap;
 typedef struct entry Entry;
 
 typedef size_t (*HashMap_HashFunc)(void* key);
-typedef bool (*HashMap_EqualFunc)(void* key1, void* key2);
+typedef int (*HashMap_EqualFunc)(void* key1, void* key2);
 
 struct entry {
     void* key;

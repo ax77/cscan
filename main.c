@@ -396,7 +396,7 @@ void test_replace_0()
 
 void test_array_0()
 {
-    ArrayList *arr = array_new();
+    ArrayList *arr = array_new(&free);
     for (int i = 0; i < 10; i++) {
         char buf[32] = { '\0' };
         sprintf(buf, "%05d", i);
