@@ -27,7 +27,7 @@ static HashMap *HEAP = NULL;
 
 static const size_t GC_KB = 1024;
 static const size_t GC_MB = 1024 * 1024;
-static const size_t LIMIT = 256; // (1024 * 1024) * 8; // when do we need run gc
+static const size_t LIMIT = 32; // (1024 * 1024) * 8; // when do we need run gc
 
 static size_t ALLOCATED = 0;
 static size_t TOTALLY_ALLOCATED = 0;
@@ -35,6 +35,8 @@ static size_t TOTALLY_DEALLOCATED = 0;
 static size_t GC_INVOKED = 0;
 static size_t MARK_MSEC = 0;
 static size_t SWEEP_MSEC = 0;
+
+#define PRINT_GC_INVOKED_STAT (0)
 
 #define CHECK_HARD_IS_EXISTS(ptr) cc_assert_true(HashMap_get(HEAP, ptr))
 
@@ -98,25 +100,33 @@ static void run_gc(const char *_file, const char *_func, int _line)
 {
     GC_INVOKED += 1;
 
-    printf("\n----------------------------------------------------------------------\n");
-    printf("\nBEFORE RUNNING GC from: %s: %s: %d\n", _file, _func, _line);
-    heap_print();
+    if (PRINT_GC_INVOKED_STAT) {
+        printf("\n----------------------------------------------------------------------\n");
+        printf("\nBEFORE RUNNING GC from: %s: %s: %d\n", _file, _func, _line);
+        heap_print();
+    }
 
     /// MARK
 
     clock_t before_mark = clock();
-    printf("\nAFTER MARK\n");
     mark();
-    heap_print();
     MARK_MSEC += (clock() - before_mark) * 1000 / CLOCKS_PER_SEC;
+
+    if (PRINT_GC_INVOKED_STAT) {
+        printf("\nAFTER MARK\n");
+        heap_print();
+    }
 
     /// SWEEP
 
     clock_t before_sweep = clock();
-    printf("\nAFTER SWEEP\n");
     sweep();
-    heap_print();
     SWEEP_MSEC += (clock() - before_sweep) * 1000 / CLOCKS_PER_SEC;
+
+    if (PRINT_GC_INVOKED_STAT) {
+        printf("\nAFTER SWEEP\n");
+        heap_print();
+    }
 }
 
 static char *create_position_info(const char *_file, const char *_func, int _line)
@@ -198,6 +208,16 @@ static void *realloc_mem_internal(void *ptr, size_t newsize, const char *_file, 
     ALLOCATED += newsize;
     TOTALLY_ALLOCATED += newsize;
     return newptr;
+}
+
+#define gc_strdup(str) gc_strdup_internal(str, __FILE__, __func__, __LINE__)
+static char *gc_strdup_internal(char *str, const char *_file, const char *_func, int _line)
+{
+    assert(str);
+    size_t newlen = strlen(str) + 1;
+    char * newstr = (char*) alloc_mem_internal(newlen, _file, _func, _line);
+    strcpy(newstr, str);
+    return newstr;
 }
 
 static void free_mem(struct gc_memory **mem)
@@ -368,58 +388,6 @@ static void heap_print()
     printf("TOTAL SIZE=%lu, capacity=%lu\n", HEAP->size, HEAP->capacity);
 }
 
-void * getstrmem()
-{
-    void *str1 = alloc_mem(1);
-    void *str2 = alloc_mem(2);
-    void *str3 = alloc_mem(3);
-    void *str4 = alloc_mem(4);
-    void *str5 = alloc_mem(5);
-    void *str6 = alloc_mem(6);
-    void *str7 = alloc_mem(7);
-
-    CHECK_HARD_IS_EXISTS(str1);
-    CHECK_HARD_IS_EXISTS(str2);
-    CHECK_HARD_IS_EXISTS(str3);
-    CHECK_HARD_IS_EXISTS(str4);
-    CHECK_HARD_IS_EXISTS(str5);
-    CHECK_HARD_IS_EXISTS(str6);
-    CHECK_HARD_IS_EXISTS(str7);
-
-    return str1;
-}
-
-char* anotherfn()
-{
-    char *str = alloc_mem(128);
-    CHECK_HARD_IS_EXISTS(str);
-    return str;
-}
-
-void dummy1()
-{
-    char *ptr = alloc_mem(12);
-    CHECK_HARD_IS_EXISTS(ptr);
-}
-
-void dummy2()
-{
-    char *ptr = alloc_mem(1212);
-    CHECK_HARD_IS_EXISTS(ptr);
-}
-
-void dummy4(void *ptr)
-{
-    ptr = alloc_mem(10);
-}
-
-void dummy3()
-{
-    char *ptr = alloc_mem(121212);
-    CHECK_HARD_IS_EXISTS(ptr);
-    dummy4(ptr);
-}
-
 void * runintime()
 {
     int msec = 0, trigger = 1000 * 5; /* 1000 * sec */
@@ -442,35 +410,6 @@ void * runintime()
 
     printf("Time taken %d seconds %d milliseconds\n", msec / 1000, msec % 1000);
     return ptr;
-}
-
-void test_array()
-{
-    ArrayList *arr = array_new(&free);
-    array_add(arr, cc_strdup("1"));
-    array_add(arr, cc_strdup("2"));
-    array_add(arr, cc_strdup("3"));
-
-    cc_assert_true(arr->size == 3);
-    char *str = array_pop_back(arr);
-    cc_assert_true(strcmp(str, "3") == 0);
-    cc_assert_true(arr->size == 2);
-
-    str = array_pop_back(arr);
-    cc_assert_true(strcmp(str, "2") == 0);
-    cc_assert_true(arr->size == 1);
-
-    str = array_pop_back(arr);
-    cc_assert_true(strcmp(str, "1") == 0);
-    cc_assert_true(arr->size == 0);
-
-    array_free(arr);
-}
-
-void empty()
-{
-    void *xxx = alloc_mem(3030);
-    CHECK_HARD_IS_EXISTS(xxx);
 }
 
 void test_loop_another(void *ptr)
@@ -509,6 +448,113 @@ void print_stat()
     heap_print();
 }
 
+//// linked list for tests
+
+struct gc_list_node {
+    void *item;
+    struct gc_list_node *prev;
+    struct gc_list_node *next;
+};
+
+struct gc_linked_list {
+    struct gc_list_node *first, *last;
+    size_t size;
+};
+
+static struct gc_linked_list * gc_list_new()
+{
+    struct gc_linked_list *list = alloc_mem(sizeof(struct gc_linked_list));
+    assert(list && "list malloc");
+
+    list->first = list->last = NULL;
+    list->size = 0;
+
+    return list;
+}
+
+static struct gc_list_node * gc_list_node_new(struct gc_list_node *prev, void *e,
+        struct gc_list_node *next)
+{
+    struct gc_list_node *node = alloc_mem(sizeof(struct gc_list_node));
+    assert(node && "node malloc");
+    node->prev = prev;
+    node->item = e;
+    node->next = next;
+    return node;
+}
+
+static void gc_list_push_back(struct gc_linked_list *list, void *e)
+{
+    struct gc_list_node *l = list->last;
+    struct gc_list_node *n = gc_list_node_new(l, e, NULL);
+    list->last = n;
+    if (l == NULL) {
+        list->first = n;
+    } else {
+        l->next = n;
+    }
+    list->size++;
+}
+
+static void * gc_list_pop_back(struct gc_linked_list *list)
+{
+    struct gc_list_node *l = list->last;
+    assert(l);
+
+    void *elem = l->item;
+
+    struct gc_list_node *prev = l->prev;
+
+    l->item = NULL;
+    l->prev = NULL; // help GC
+
+    list->last = prev;
+    if (prev == NULL) {
+        list->first = NULL;
+    } else {
+        prev->next = NULL;
+    }
+    list->size--;
+
+    return elem;
+}
+
+static int gc_list_empty(struct gc_linked_list *list)
+{
+    return list->size == 0;
+}
+
+void dothelist1(struct gc_linked_list *list)
+{
+    while (!gc_list_empty(list)) {
+        char *str = gc_list_pop_back(list);
+        CHECK_HARD_IS_EXISTS(str);
+        printf("%s\n", str);
+    }
+}
+
+void dothelist2(struct gc_linked_list *list)
+{
+    for (int i = 0; i < 8; i += 1) {
+        char buf[32];
+        sprintf(buf, "%d", i);
+        gc_list_push_back(list, gc_strdup(buf));
+    }
+    dothelist1(list);
+}
+
+void test_list()
+{
+    struct gc_linked_list *list = gc_list_new();
+    for (int i = 0; i < 32; i += 1) {
+        char buf[32];
+        sprintf(buf, "%d", i);
+        gc_list_push_back(list, gc_strdup(buf));
+    }
+    dothelist1(list);
+    dothelist2(list);
+}
+
 int do_main(int argc, char **argv)
 {
     HEAP = HashMap_new(ptr_hash, ptr_eq);
@@ -518,31 +564,11 @@ int do_main(int argc, char **argv)
     MARK_MSEC = 0;
     SWEEP_MSEC = 0;
 
-    test_loop();
+    test_list();
+    char *str = alloc_mem(128);
+    str = alloc_mem(128);
 
-    char *str = alloc_mem(32);
-    CHECK_HARD_IS_EXISTS(str);
-
-    str = realloc_mem(str, 128);
-    CHECK_HARD_IS_EXISTS(str);
-
-    str = realloc_mem(str, 1024);
-    str = realloc_mem(str, 10240);
-    CHECK_HARD_IS_EXISTS(str);
-
-    //void *xxxxx = runintime();
-    //test_array();
-
-//    anotherfn();
-//    char*str = anotherfn();
-//    void*ptr = getstrmem();
-//    dummy1();
-//    dummy2();
-//    dummy3();
-//    empty();
-//
-//    CHECK_HARD_IS_EXISTS(str);
-//    CHECK_HARD_IS_EXISTS(ptr);
+    //run_gc(__FILE__, __func__, __LINE__);
 
     print_stat();
     printf("\n:ok:\n");
