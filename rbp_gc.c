@@ -26,7 +26,7 @@ intptr_t * __stackBegin;
 static HashMap *HEAP = NULL;
 
 static const size_t GC_MEGABYTE = 1024 * 1024;
-static const size_t LIMIT = GC_MEGABYTE; // (1024 * 1024) * 8; // when do we need run gc
+static const size_t LIMIT = 8; // (1024 * 1024) * 8; // when do we need run gc
 
 static size_t ALLOCATED = 0;
 static size_t TOTALLY_ALLOCATED = 0;
@@ -53,6 +53,24 @@ static void *gc_malloc(size_t size)
         ret = malloc(size);
         if (ret == NULL) {
             ret = malloc(size);
+        }
+    }
+
+    assert(ret);
+    return ret;
+}
+
+static void *gc_realloc(void *ptr, size_t newsize)
+{
+    assert(newsize);
+    assert(newsize <= INT_MAX);
+
+    void *ret = NULL;
+    ret = realloc(ptr, newsize);
+    if (ret == NULL) {
+        ret = realloc(ptr, newsize);
+        if (ret == NULL) {
+            ret = realloc(ptr, newsize);
         }
     }
 
@@ -99,30 +117,85 @@ static void run_gc(const char *_file, const char *_func, int _line)
     SWEEP_MSEC += (clock() - before_sweep) * 1000 / CLOCKS_PER_SEC;
 }
 
+static char *create_position_info(const char *_file, const char *_func, int _line)
+{
+    char buffer[512] = { '\0' };
+    sprintf(buffer, "%s:%s:%d", _file, _func, _line);
+    return cc_strdup(buffer);
+}
+
+static void put_memory_header_into_the_heap(void *ptr, size_t size, const char *_file,
+        const char *_func, int _line)
+{
+
+    assert(ptr);
+    assert(size);
+
+    struct gc_memory *mem = gc_malloc(sizeof(struct gc_memory));
+    mem->ptr = ptr;
+    mem->size = size;
+    mem->marked = 0;
+    mem->location = create_position_info(_file, _func, _line);
+    HashMap_add(HEAP, ptr, mem);
+}
+
 #define alloc_mem(size) alloc_mem_internal(size, __FILE__, __func__, __LINE__)
 static void *alloc_mem_internal(size_t size, const char *_file, const char *_func, int _line)
 {
 
     void *ptr = gc_malloc(size);
 
-    struct gc_memory *mem = gc_malloc(sizeof(struct gc_memory));
-    mem->ptr = ptr;
-    mem->size = size;
-    mem->marked = 0;
+    put_memory_header_into_the_heap(ptr, size, _file, _func, _line);
 
-    char buffer[512] = { '\0' };
-    sprintf(buffer, "[%s:%s:%d]", _file, _func, _line);
-    mem->location = cc_strdup(buffer);
-
-    HashMap_add(HEAP, ptr, mem);
-
-    /// XXX: I'm not sure how to do this properly...
+    /// XXX: not sure how to do this properly...
     if (ALLOCATED >= LIMIT) {
         run_gc(_file, _func, _line);
     }
+
     ALLOCATED += size;
     TOTALLY_ALLOCATED += size;
     return ptr;
+}
+
+#define realloc_mem(ptr, newsize) realloc_mem_internal(ptr, newsize, __FILE__, __func__, __LINE__)
+static void *realloc_mem_internal(void *ptr, size_t newsize, const char *_file, const char *_func,
+        int _line)
+{
+    assert(ptr);
+    assert(newsize);
+
+    struct gc_memory *mem = HashMap_remove(HEAP, ptr);
+    if (!mem) {
+        cc_fatal("pointer was not found in the heap: %p\n", ptr);
+    }
+
+    assert(mem->ptr);
+    assert(mem->size);
+
+    // create a new pointer, and copy all the bytes from the old one
+    // it is possible to use realloc here
+    // but - using malloc is much straightforward in my opinion.
+    // dunno why.
+    void *newptr = gc_malloc(newsize);
+    memcpy(newptr, mem->ptr, mem->size);
+
+    // manually destroy the old object
+    // we've already deleted it from the heap
+    // now we have to free the content
+    free_mem(&mem);
+
+    // create new object, and put it into the heap
+    put_memory_header_into_the_heap(newptr, newsize, _file, _func, _line);
+
+    /// XXX: not sure how to do this properly...
+    if (ALLOCATED >= LIMIT) {
+        run_gc(_file, _func, _line);
+    }
+
+    // re-calculate the size
+    ALLOCATED += newsize;
+    TOTALLY_ALLOCATED += newsize;
+    return newptr;
 }
 
 static void free_mem(struct gc_memory **mem)
@@ -269,7 +342,12 @@ static void sweep()
 
 static void heap_print()
 {
-    printf("heap: size=%lu, capacity=%lu\n", HEAP->size, HEAP->capacity);
+    static char *delim =
+            "|----------------|----------------|--|----------------|----------------------------------------------------------------|\n";
+
+    printf(delim);
+    printf("|%16s|%16s|%2s|%16s|%64s|\n", "pointer", "object", "M", "size", "location");
+    printf(delim);
 
     for (size_t i = 0; i < HEAP->capacity; i++) {
         Entry* e = HEAP->table[i];
@@ -278,10 +356,13 @@ static void heap_print()
         }
         for (; e; e = e->next) {
             struct gc_memory *mem = (struct gc_memory *) e->val;
-            printf("%lu:%lu:%s:%8lu:%s\n", (size_t) e->key, (size_t) e->val,
+            printf("|%16lu|%16lu|%2s|%16lu|%-64s|\n", (size_t) e->key, (size_t) e->val,
                     (mem->marked ? "V" : " "), mem->size, mem->location);
+            printf(delim);
         }
     }
+
+    printf("TOTAL SIZE=%lu, capacity=%lu\n", HEAP->size, HEAP->capacity);
 }
 
 void * getstrmem()
@@ -396,7 +477,7 @@ void test_loop_another(void *ptr)
 
 void test_loop()
 {
-    for (size_t i = 0; i < 1024; i += 1) {
+    for (size_t i = 0; i < 8; i += 1) {
         void *ptr = alloc_mem(32768);
         CHECK_HARD_IS_EXISTS(ptr);
         test_loop_another(ptr);
@@ -406,17 +487,19 @@ void test_loop()
 void print_stat()
 {
 
-    printf("\nTOTALLY_ALLOCATED %lu bytes, %lu Kb, %lu Mb\n", TOTALLY_ALLOCATED,
-            TOTALLY_ALLOCATED / 1024, TOTALLY_ALLOCATED / 1024 / 1024);
-
-    printf("GC_INVOKED %lu times\n", GC_INVOKED);
-
-    printf("MARK sec:%lu msec:%lu\n", MARK_MSEC / 1000, MARK_MSEC % 1000);
-
-    printf("SWEEP sec:%lu msec:%lu\n", SWEEP_MSEC / 1000, SWEEP_MSEC % 1000);
-
     size_t total_time = MARK_MSEC + SWEEP_MSEC;
-    printf("TOTAL sec:%lu msec:%lu\n", total_time / 1000, total_time % 1000);
+
+    printf("\n------- STAT ------- \n");
+
+    printf("TOTALLY_ALLOCATED   %lu bytes, %lu Kb, %lu Mb\n", TOTALLY_ALLOCATED,
+            TOTALLY_ALLOCATED / 1024, TOTALLY_ALLOCATED / 1024 / 1024);
+    printf("GC_INVOKED          %lu times\n", GC_INVOKED);
+    printf("MARK                sec:%lu msec:%lu\n", MARK_MSEC / 1000, MARK_MSEC % 1000);
+    printf("SWEEP               sec:%lu msec:%lu\n", SWEEP_MSEC / 1000, SWEEP_MSEC % 1000);
+    printf("TOTAL               sec:%lu msec:%lu\n", total_time / 1000, total_time % 1000);
+
+    printf("\nHEAP NOW \n");
+    heap_print();
 }
 
 int do_main(int argc, char **argv)
@@ -430,19 +513,29 @@ int do_main(int argc, char **argv)
 
     test_loop();
 
+    char *str = alloc_mem(32);
+    CHECK_HARD_IS_EXISTS(str);
+
+    str = realloc_mem(str, 128);
+    CHECK_HARD_IS_EXISTS(str);
+
+    str = realloc_mem(str, 1024);
+    str = realloc_mem(str, 10240);
+    CHECK_HARD_IS_EXISTS(str);
+
     //void *xxxxx = runintime();
     //test_array();
 
-    anotherfn();
-    char*str = anotherfn();
-    void*ptr = getstrmem();
-    dummy1();
-    dummy2();
-    dummy3();
-    empty();
-
-    CHECK_HARD_IS_EXISTS(str);
-    CHECK_HARD_IS_EXISTS(ptr);
+//    anotherfn();
+//    char*str = anotherfn();
+//    void*ptr = getstrmem();
+//    dummy1();
+//    dummy2();
+//    dummy3();
+//    empty();
+//
+//    CHECK_HARD_IS_EXISTS(str);
+//    CHECK_HARD_IS_EXISTS(ptr);
 
     print_stat();
     printf("\n:ok:\n");
