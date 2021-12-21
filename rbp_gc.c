@@ -10,14 +10,27 @@
 #include <string.h>
 #include <setjmp.h>
 #include <time.h>
+#include <dirent.h>
 
 #include "hashmap.h"
 #include "core_unittests.h"
 #include "core_mem.h"
 #include "core_array.h"
+#include "core_strutil.h"
+
+#if defined __amd64__ \
+||  defined __amd64 \
+||  defined __x86_64__ \
+||  defined __x86_64 \
+||  defined _M_X64 \
+||  defined _M_AMD64
 
 #define __READ_RBP() __asm__ volatile("movq %%rbp, %0" : "=r"(__rbp))
 #define __READ_RSP() __asm__ volatile("movq %%rsp, %0" : "=r"(__rsp))
+
+#else
+#error("unsupported CPU")
+#endif
 
 intptr_t * __rbp;
 intptr_t * __rsp;
@@ -27,7 +40,7 @@ static HashMap *HEAP = NULL;
 
 static const size_t GC_KB = 1024;
 static const size_t GC_MB = 1024 * 1024;
-static const size_t LIMIT = 32; // (1024 * 1024) * 8; // when do we need run gc
+static const size_t LIMIT = 256; // (1024 * 1024) * 8; // when do we need run gc
 
 static size_t ALLOCATED = 0;
 static size_t TOTALLY_ALLOCATED = 0;
@@ -555,6 +568,60 @@ void test_list()
     dothelist2(list);
 }
 
+static char* gc_readfile(const char *filename)
+{
+    FILE *fp = NULL;
+    size_t n, sz;
+
+    char *data = NULL;
+    fp = fopen(filename, "rb");
+    assert(fp && "file does not exists.");
+
+    fseek(fp, 0, SEEK_END);
+    sz = ftell(fp);
+    rewind(fp);
+
+    data = alloc_mem(sz + 1);
+
+    data[sz] = '\0';
+    n = fread(data, 1, sz, fp);
+    if (n != sz) {
+        goto fail;
+    }
+
+    fclose(fp);
+    return data;
+
+    fail: if (fp) {
+        fclose(fp);
+    }
+
+    assert(0);
+    return NULL;
+}
+
+static void test_with_files()
+{
+    DIR *d = NULL;
+    struct dirent *dir;
+    char *path = ".....";
+    d = opendir(path);
+    if (d) {
+        while ((dir = readdir(d)) != NULL) {
+
+            if (!strends(dir->d_name, "gctestext")) {
+                continue;
+            }
+
+            char buf[2048] = { '\0' };
+            sprintf(buf, "%s/%s", path, dir->d_name);
+
+            char *content = gc_readfile(buf);
+        }
+        closedir(d);
+    }
+}
+
 int do_main(int argc, char **argv)
 {
     HEAP = HashMap_new(ptr_hash, ptr_eq);
@@ -564,11 +631,11 @@ int do_main(int argc, char **argv)
     MARK_MSEC = 0;
     SWEEP_MSEC = 0;
 
-    test_list();
-    char *str = alloc_mem(128);
-    str = alloc_mem(128);
+    // tests
 
-    //run_gc(__FILE__, __func__, __LINE__);
+    test_list();
+    char *str = alloc_mem(1024);
+    str = realloc_mem(str, 2048);
 
     print_stat();
     printf("\n:ok:\n");
