@@ -23,18 +23,18 @@ intptr_t * __rbp;
 intptr_t * __rsp;
 intptr_t * __stackBegin;
 
-static HashMap *heap = NULL;
+static HashMap *HEAP = NULL;
 
 static const size_t GC_MEGABYTE = 1024 * 1024;
+static const size_t LIMIT = GC_MEGABYTE; // (1024 * 1024) * 8; // when do we need run gc
 
 static size_t ALLOCATED = 0;
-static const size_t LIMIT = GC_MEGABYTE; // (1024 * 1024) * 8; // when do we need run gc
 static size_t TOTALLY_ALLOCATED = 0;
 static size_t GC_INVOKED = 0;
 static size_t MARK_MSEC = 0;
 static size_t SWEEP_MSEC = 0;
 
-#define CHECK_HARD_IS_EXISTS(ptr) cc_assert_true(HashMap_get(heap, ptr))
+#define CHECK_HARD_IS_EXISTS(ptr) cc_assert_true(HashMap_get(HEAP, ptr))
 
 static void gcInit()
 {
@@ -114,7 +114,7 @@ static void *alloc_mem_internal(size_t size, const char *_file, const char *_fun
     sprintf(buffer, "[%s:%s:%d]", _file, _func, _line);
     mem->location = cc_strdup(buffer);
 
-    HashMap_add(heap, ptr, mem);
+    HashMap_add(HEAP, ptr, mem);
 
     /// XXX: I'm not sure how to do this properly...
     if (ALLOCATED >= LIMIT) {
@@ -166,19 +166,19 @@ static ArrayList *get_roots()
     uint8_t * rsp = (uint8_t *) __rsp;
     uint8_t * top = (uint8_t *) __stackBegin;
 
+    assert(rsp);
+    assert(top);
+
     while (rsp < top) {
         // auto address = (Traceable *) *(uintptr_t *) rsp;
 
         void * address = (void*) *(uintptr_t *) rsp;
 
-        if (!address) {
-            rsp++;
-            continue;
-        }
-
-        struct gc_memory *mem = HashMap_get(heap, address);
-        if (mem) {
-            array_add(result, mem);
+        if (address) {
+            struct gc_memory *mem = HashMap_get(HEAP, address);
+            if (mem) {
+                array_add(result, mem);
+            }
         }
 
         rsp++;
@@ -194,17 +194,18 @@ static ArrayList *get_pointers(struct gc_memory *mem)
     uint8_t *p = mem->ptr;
     uint8_t *end = p + mem->size;
 
+    assert(p);
+    assert(end);
+
     while (p < end) {
 
         void * address = (void*) *(uintptr_t *) p;
-        if (!address) {
-            p++;
-            continue;
-        }
 
-        struct gc_memory *mem = HashMap_get(heap, address);
-        if (mem) {
-            array_add(result, mem);
+        if (address) {
+            struct gc_memory *mem = HashMap_get(HEAP, address);
+            if (mem) {
+                array_add(result, mem);
+            }
         }
 
         p++;
@@ -239,9 +240,9 @@ static void sweep()
 
     ArrayList *to_remove = array_new(&array_dummy_free_fn);
 
-    for (size_t i = 0; i < heap->capacity; i++) {
+    for (size_t i = 0; i < HEAP->capacity; i++) {
 
-        Entry* e = heap->table[i];
+        Entry* e = HEAP->table[i];
         if (e == NULL) {
             continue;
         }
@@ -259,7 +260,7 @@ static void sweep()
     for (size_t i = 0; i < to_remove->size; i += 1) {
         struct gc_memory *mem = (struct gc_memory *) array_get(to_remove, i);
         void *ptr = mem->ptr;
-        HashMap_remove(heap, ptr);
+        HashMap_remove(HEAP, ptr);
         free_mem(&mem);
     }
 
@@ -268,10 +269,10 @@ static void sweep()
 
 static void heap_print()
 {
-    printf("heap: size=%lu, capacity=%lu\n", heap->size, heap->capacity);
+    printf("heap: size=%lu, capacity=%lu\n", HEAP->size, HEAP->capacity);
 
-    for (size_t i = 0; i < heap->capacity; i++) {
-        Entry* e = heap->table[i];
+    for (size_t i = 0; i < HEAP->capacity; i++) {
+        Entry* e = HEAP->table[i];
         if (e == NULL) {
             continue;
         }
@@ -413,11 +414,14 @@ void print_stat()
     printf("MARK sec:%lu msec:%lu\n", MARK_MSEC / 1000, MARK_MSEC % 1000);
 
     printf("SWEEP sec:%lu msec:%lu\n", SWEEP_MSEC / 1000, SWEEP_MSEC % 1000);
+
+    size_t total_time = MARK_MSEC + SWEEP_MSEC;
+    printf("TOTAL sec:%lu msec:%lu\n", total_time / 1000, total_time % 1000);
 }
 
 int do_main(int argc, char **argv)
 {
-    heap = HashMap_new(ptr_hash, ptr_eq);
+    HEAP = HashMap_new(ptr_hash, ptr_eq);
     ALLOCATED = 0;
     TOTALLY_ALLOCATED = 0;
     GC_INVOKED = 0;
@@ -429,16 +433,16 @@ int do_main(int argc, char **argv)
     //void *xxxxx = runintime();
     //test_array();
 
-//    anotherfn();
-//    char*str = anotherfn();
-//    void*ptr = getstrmem();
-//    dummy1();
-//    dummy2();
-//    dummy3();
-//    empty();
-//
-//    cc_assert_true(HashMap_get(heap, str));
-//    cc_assert_true(HashMap_get(heap, ptr));
+    anotherfn();
+    char*str = anotherfn();
+    void*ptr = getstrmem();
+    dummy1();
+    dummy2();
+    dummy3();
+    empty();
+
+    CHECK_HARD_IS_EXISTS(str);
+    CHECK_HARD_IS_EXISTS(ptr);
 
     print_stat();
     printf("\n:ok:\n");
