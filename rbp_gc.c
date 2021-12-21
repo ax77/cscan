@@ -25,11 +25,13 @@ intptr_t * __stackBegin;
 
 static HashMap *HEAP = NULL;
 
-static const size_t GC_MEGABYTE = 1024 * 1024;
-static const size_t LIMIT = 8; // (1024 * 1024) * 8; // when do we need run gc
+static const size_t GC_KB = 1024;
+static const size_t GC_MB = 1024 * 1024;
+static const size_t LIMIT = 256; // (1024 * 1024) * 8; // when do we need run gc
 
 static size_t ALLOCATED = 0;
 static size_t TOTALLY_ALLOCATED = 0;
+static size_t TOTALLY_DEALLOCATED = 0;
 static size_t GC_INVOKED = 0;
 static size_t MARK_MSEC = 0;
 static size_t SWEEP_MSEC = 0;
@@ -211,6 +213,7 @@ static void free_mem(struct gc_memory **mem)
     (*mem)->location = NULL;
 
     ALLOCATED -= (*mem)->size;
+    TOTALLY_DEALLOCATED += (*mem)->size;
     (*mem)->size = 0;
 
     free(*mem);
@@ -492,11 +495,15 @@ void print_stat()
     printf("\n------- STAT ------- \n");
 
     printf("TOTALLY_ALLOCATED   %lu bytes, %lu Kb, %lu Mb\n", TOTALLY_ALLOCATED,
-            TOTALLY_ALLOCATED / 1024, TOTALLY_ALLOCATED / 1024 / 1024);
-    printf("GC_INVOKED          %lu times\n", GC_INVOKED);
-    printf("MARK                sec:%lu msec:%lu\n", MARK_MSEC / 1000, MARK_MSEC % 1000);
-    printf("SWEEP               sec:%lu msec:%lu\n", SWEEP_MSEC / 1000, SWEEP_MSEC % 1000);
-    printf("TOTAL               sec:%lu msec:%lu\n", total_time / 1000, total_time % 1000);
+            TOTALLY_ALLOCATED / GC_KB, TOTALLY_ALLOCATED / GC_MB);
+
+    printf("TOTALLY_DEALLOCATED %lu bytes, %lu Kb, %lu Mb\n", TOTALLY_DEALLOCATED,
+            TOTALLY_DEALLOCATED / GC_KB, TOTALLY_DEALLOCATED / GC_MB);
+
+    printf("GC_INVOKED %lu times\n", GC_INVOKED);
+    printf("MARK       sec:%lu, msec:%lu\n", MARK_MSEC / 1000, MARK_MSEC % 1000);
+    printf("SWEEP      sec:%lu, msec:%lu\n", SWEEP_MSEC / 1000, SWEEP_MSEC % 1000);
+    printf("TOTAL      sec:%lu, msec:%lu\n", total_time / 1000, total_time % 1000);
 
     printf("\nHEAP NOW \n");
     heap_print();
