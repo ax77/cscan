@@ -304,7 +304,7 @@ struct token_simple * token_simple_new(char *name, int type, int flag)
     return rv;
 }
 
-bool token_simple_equal(void *a, void *b)
+int token_simple_equal(void *a, void *b)
 {
 
     struct token_simple * first = (struct token_simple*) a;
@@ -339,9 +339,9 @@ void test_hashmap_pointers_1()
 
     struct token_simple * a1 = token_simple_new("a", 0, 1);
 
-    HashMap_add(map, a1, "a1");
-    HashMap_add(map, a1, "a2");
-    HashMap_add(map, a1, "a3");
+    HashMap_put(map, a1, "a1");
+    HashMap_put(map, a1, "a2");
+    HashMap_put(map, a1, "a3");
 
     char * res = (char*) HashMap_get(map, a1);
     cc_assert_true(res);
@@ -362,16 +362,16 @@ void test_hashmap_pointers_1()
 void test_hashmap_str_1()
 {
     HashMap * map = HashMap_new_str();
-    HashMap_add(map, "1", "1");
-    HashMap_add(map, "2", "2");
-    HashMap_add(map, "3", "3");
+    HashMap_put(map, "1", "1");
+    HashMap_put(map, "2", "2");
+    HashMap_put(map, "3", "3");
 
     cc_assert_true(HashMap_size(map) == 3);
     cc_assert_true(streq(HashMap_get(map, "1"), "1"));
     cc_assert_true(streq(HashMap_get(map, "2"), "2"));
     cc_assert_true(streq(HashMap_get(map, "3"), "3"));
 
-    HashMap_add(map, "1", "0");
+    HashMap_put(map, "1", "0");
     cc_assert_true(HashMap_size(map) == 3);
     cc_assert_true(streq(HashMap_get(map, "1"), "0"));
 }

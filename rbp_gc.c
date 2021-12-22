@@ -78,18 +78,10 @@ static const size_t GC_MB = 1024 * 1024;
 static const size_t LIMIT = 256; // (1024 * 1024) * 8; // when do we need run gc
 
 #define PRINT_GC_INVOKED_STAT (0)
-
 #define CHECK_HARD_IS_EXISTS(ptr) cc_assert_true(HashMap_get(GC.heap, ptr))
 
-static size_t ptr_hash(void *ptr) {
-    return (size_t) ptr;
-}
-
-static int ptr_eq(void *a, void *b) {
-    return a == b;
-}
-
-static void gc_init(struct core_gc *gc, void *bottom) {
+static void gc_init(struct core_gc *gc, void *bottom)
+{
 
     assert(gc);
     assert(bottom);
@@ -100,7 +92,7 @@ static void gc_init(struct core_gc *gc, void *bottom) {
 
     gc->bytes_allocated = 0;
     gc->limit = 256;
-    gc->heap = HashMap_new(ptr_hash, ptr_eq);
+    gc->heap = HashMap_new(hashmap_hash_ptr, hashmap_equal_ptr);
 
     gc->times_invoked = 0;
     gc->mark_msec = 0;
@@ -109,7 +101,8 @@ static void gc_init(struct core_gc *gc, void *bottom) {
     gc->totally_deallocated = 0;
 }
 
-static void* gc_malloc(size_t size) {
+static void* gc_malloc(size_t size)
+{
     assert(size);
     assert(size <= INT_MAX);
 
@@ -126,23 +119,6 @@ static void* gc_malloc(size_t size) {
     return ret;
 }
 
-static void* gc_realloc(void *ptr, size_t newsize) {
-    assert(newsize);
-    assert(newsize <= INT_MAX);
-
-    void *ret = NULL;
-    ret = realloc(ptr, newsize);
-    if (ret == NULL) {
-        ret = realloc(ptr, newsize);
-        if (ret == NULL) {
-            ret = realloc(ptr, newsize);
-        }
-    }
-
-    assert(ret);
-    return ret;
-}
-
 static ArrayList* get_roots();
 static ArrayList* get_pointers(struct core_gc_ptr *mem);
 static void mark();
@@ -150,12 +126,12 @@ static void sweep();
 static void free_mem(struct core_gc_ptr **mem);
 static void heap_print();
 
-static void run_gc(const char *_file, const char *_func, int _line) {
+static void run_gc(const char *_file, const char *_func, int _line)
+{
     GC.times_invoked += 1;
 
     if (PRINT_GC_INVOKED_STAT) {
-        printf(
-                "\n----------------------------------------------------------------------\n");
+        printf("\n----------------------------------------------------------------------\n");
         printf("\nBEFORE RUNNING GC from: %s: %s: %d\n", _file, _func, _line);
         heap_print();
     }
@@ -183,29 +159,32 @@ static void run_gc(const char *_file, const char *_func, int _line) {
     }
 }
 
-static char* create_position_info(const char *_file, const char *_func,
-        int _line) {
+static char* create_position_info(const char *_file, const char *_func, int _line)
+{
     char buffer[512] = { '\0' };
     sprintf(buffer, "%s:%s:%d", _file, _func, _line);
     return cc_strdup(buffer);
 }
 
-static size_t max(size_t a, size_t b) {
+static size_t max(size_t a, size_t b)
+{
     if (a > b) {
         return a;
     }
     return b;
 }
 
-static size_t min(size_t a, size_t b) {
+static size_t min(size_t a, size_t b)
+{
     if (a < b) {
         return a;
     }
     return b;
 }
 
-static void put_memory_header_into_the_heap(void *ptr, size_t size,
-        const char *_file, const char *_func, int _line) {
+static void put_memory_header_into_the_heap(void *ptr, size_t size, const char *_file,
+        const char *_func, int _line)
+{
 
     assert(ptr);
     assert(size);
@@ -220,12 +199,16 @@ static void put_memory_header_into_the_heap(void *ptr, size_t size,
     GC.maxptr = max(GC.maxptr, iptr);
     GC.minptr = min(GC.minptr, iptr);
 
-    HashMap_add(GC.heap, ptr, mem);
+    // do not allow to ovetwrite the pair
+    // if this pair is already presented by this key...
+    // is it possible?
+    void *overwritten = HashMap_put(GC.heap, ptr, mem);
+    assert(overwritten == NULL);
 }
 
 #define alloc_mem(size) alloc_mem_internal(size, __FILE__, __func__, __LINE__)
-static void* alloc_mem_internal(size_t size, const char *_file,
-        const char *_func, int _line) {
+static void* alloc_mem_internal(size_t size, const char *_file, const char *_func, int _line)
+{
 
     void *ptr = gc_malloc(size);
 
@@ -242,8 +225,9 @@ static void* alloc_mem_internal(size_t size, const char *_file,
 }
 
 #define realloc_mem(ptr, newsize) realloc_mem_internal(ptr, newsize, __FILE__, __func__, __LINE__)
-static void* realloc_mem_internal(void *ptr, size_t newsize, const char *_file,
-        const char *_func, int _line) {
+static void* realloc_mem_internal(void *ptr, size_t newsize, const char *_file, const char *_func,
+        int _line)
+{
     assert(ptr);
     assert(newsize);
 
@@ -282,8 +266,8 @@ static void* realloc_mem_internal(void *ptr, size_t newsize, const char *_file,
 }
 
 #define gc_strdup(str) gc_strdup_internal(str, __FILE__, __func__, __LINE__)
-static char* gc_strdup_internal(char *str, const char *_file, const char *_func,
-        int _line) {
+static char* gc_strdup_internal(char *str, const char *_file, const char *_func, int _line)
+{
     assert(str);
     size_t newlen = strlen(str) + 1;
     char *newstr = (char*) alloc_mem_internal(newlen, _file, _func, _line);
@@ -291,7 +275,8 @@ static char* gc_strdup_internal(char *str, const char *_file, const char *_func,
     return newstr;
 }
 
-static void free_mem(struct core_gc_ptr **mem) {
+static void free_mem(struct core_gc_ptr **mem)
+{
     assert(*mem);
     assert((*mem)->ptr);
     assert((*mem)->size);
@@ -310,7 +295,8 @@ static void free_mem(struct core_gc_ptr **mem) {
     *mem = NULL;
 }
 
-static ArrayList* get_roots() {
+static ArrayList* get_roots()
+{
 
     void *__rsp = NULL;
 
@@ -349,7 +335,8 @@ static ArrayList* get_roots() {
     return result;
 }
 
-static ArrayList* get_pointers(struct core_gc_ptr *mem) {
+static ArrayList* get_pointers(struct core_gc_ptr *mem)
+{
     ArrayList *result = array_new(&array_dummy_free_fn);
 
     uint8_t *p = (uint8_t*) mem->ptr;
@@ -380,7 +367,8 @@ static ArrayList* get_pointers(struct core_gc_ptr *mem) {
     return result;
 }
 
-static void mark() {
+static void mark()
+{
 
     ArrayList *worklist = get_roots();
 
@@ -390,8 +378,7 @@ static void mark() {
             mem->marked = 1;
             ArrayList *pointers = get_pointers(mem);
             for (size_t i = 0; i < pointers->size; i += 1) {
-                struct core_gc_ptr *ptr = (struct core_gc_ptr*) array_get(
-                        pointers, i);
+                struct core_gc_ptr *ptr = (struct core_gc_ptr*) array_get(pointers, i);
                 array_add(worklist, ptr);
             }
             array_free(pointers);
@@ -401,7 +388,8 @@ static void mark() {
     array_free(worklist);
 }
 
-static void sweep() {
+static void sweep()
+{
 
     ArrayList *to_remove = array_new(&array_dummy_free_fn);
 
@@ -432,13 +420,13 @@ static void sweep() {
     array_free(to_remove);
 }
 
-static void heap_print() {
+static void heap_print()
+{
     static char *delim =
             "|----------------|----------------|--|----------------|----------------------------------------------------------------|\n";
 
     printf("%s", delim);
-    printf("|%16s|%16s|%2s|%16s|%64s|\n", "pointer", "object", "M", "size",
-            "location");
+    printf("|%16s|%16s|%2s|%16s|%64s|\n", "pointer", "object", "M", "size", "location");
     printf("%s", delim);
 
     for (size_t i = 0; i < GC.heap->capacity; i++) {
@@ -448,9 +436,8 @@ static void heap_print() {
         }
         for (; e; e = e->next) {
             struct core_gc_ptr *mem = (struct core_gc_ptr*) e->val;
-            printf("|%16lu|%16lu|%2s|%16lu|%-64s|\n", (size_t) e->key,
-                    (size_t) e->val, (mem->marked ? "V" : " "), mem->size,
-                    mem->location);
+            printf("|%16lu|%16lu|%2s|%16lu|%-64s|\n", (size_t) e->key, (size_t) e->val,
+                    (mem->marked ? "V" : " "), mem->size, mem->location);
             printf("%s", delim);
         }
     }
@@ -458,7 +445,8 @@ static void heap_print() {
     printf("TOTAL SIZE=%lu, capacity=%lu\n", GC.heap->size, GC.heap->capacity);
 }
 
-void* runintime() {
+void* runintime()
+{
     int msec = 0, trigger = 1000 * 5; /* 1000 * sec */
     clock_t before = clock();
 
@@ -481,11 +469,13 @@ void* runintime() {
     return ptr;
 }
 
-void test_loop_another(void *ptr) {
+void test_loop_another(void *ptr)
+{
     CHECK_HARD_IS_EXISTS(ptr);
 }
 
-void test_loop() {
+void test_loop()
+{
     for (size_t i = 0; i < 8; i += 1) {
         void *ptr = alloc_mem(32768);
         CHECK_HARD_IS_EXISTS(ptr);
@@ -493,27 +483,23 @@ void test_loop() {
     }
 }
 
-void print_stat() {
+void print_stat()
+{
 
     size_t total_time = GC.mark_msec + GC.sweep_msec;
 
     printf("\n------- STAT ------- \n");
 
-    printf("TOTALLY_ALLOCATED   %lu bytes, %lu Kb, %lu Mb\n",
-            GC.totally_allocated, GC.totally_allocated / GC_KB,
-            GC.totally_allocated / GC_MB);
+    printf("TOTALLY_ALLOCATED   %lu bytes, %lu Kb, %lu Mb\n", GC.totally_allocated,
+            GC.totally_allocated / GC_KB, GC.totally_allocated / GC_MB);
 
-    printf("TOTALLY_DEALLOCATED %lu bytes, %lu Kb, %lu Mb\n",
-            GC.totally_deallocated, GC.totally_deallocated / GC_KB,
-            GC.totally_deallocated / GC_MB);
+    printf("TOTALLY_DEALLOCATED %lu bytes, %lu Kb, %lu Mb\n", GC.totally_deallocated,
+            GC.totally_deallocated / GC_KB, GC.totally_deallocated / GC_MB);
 
     printf("GC_INVOKED %lu times\n", GC.times_invoked);
-    printf("MARK       sec:%lu, msec:%lu\n", GC.mark_msec / 1000,
-            GC.mark_msec % 1000);
-    printf("SWEEP      sec:%lu, msec:%lu\n", GC.sweep_msec / 1000,
-            GC.sweep_msec % 1000);
-    printf("TOTAL      sec:%lu, msec:%lu\n", total_time / 1000,
-            total_time % 1000);
+    printf("MARK       sec:%lu, msec:%lu\n", GC.mark_msec / 1000, GC.mark_msec % 1000);
+    printf("SWEEP      sec:%lu, msec:%lu\n", GC.sweep_msec / 1000, GC.sweep_msec % 1000);
+    printf("TOTAL      sec:%lu, msec:%lu\n", total_time / 1000, total_time % 1000);
 
     printf("\nHEAP NOW \n");
     heap_print();
@@ -532,7 +518,8 @@ struct gc_linked_list {
     size_t size;
 };
 
-static struct gc_linked_list* gc_list_new() {
+static struct gc_linked_list* gc_list_new()
+{
     struct gc_linked_list *list = alloc_mem(sizeof(struct gc_linked_list));
     assert(list && "list malloc");
 
@@ -543,7 +530,8 @@ static struct gc_linked_list* gc_list_new() {
 }
 
 static struct gc_list_node* gc_list_node_new(struct gc_list_node *prev, void *e,
-        struct gc_list_node *next) {
+        struct gc_list_node *next)
+{
     struct gc_list_node *node = alloc_mem(sizeof(struct gc_list_node));
     assert(node && "node malloc");
     node->prev = prev;
@@ -552,7 +540,8 @@ static struct gc_list_node* gc_list_node_new(struct gc_list_node *prev, void *e,
     return node;
 }
 
-static void gc_list_push_back(struct gc_linked_list *list, void *e) {
+static void gc_list_push_back(struct gc_linked_list *list, void *e)
+{
     struct gc_list_node *l = list->last;
     struct gc_list_node *n = gc_list_node_new(l, e, NULL);
     list->last = n;
@@ -564,7 +553,8 @@ static void gc_list_push_back(struct gc_linked_list *list, void *e) {
     list->size++;
 }
 
-static void* gc_list_pop_back(struct gc_linked_list *list) {
+static void* gc_list_pop_back(struct gc_linked_list *list)
+{
     struct gc_list_node *l = list->last;
     assert(l);
 
@@ -586,11 +576,13 @@ static void* gc_list_pop_back(struct gc_linked_list *list) {
     return elem;
 }
 
-static int gc_list_empty(struct gc_linked_list *list) {
+static int gc_list_empty(struct gc_linked_list *list)
+{
     return list->size == 0;
 }
 
-void dothelist1(struct gc_linked_list *list) {
+void dothelist1(struct gc_linked_list *list)
+{
     while (!gc_list_empty(list)) {
         char *str = gc_list_pop_back(list);
         CHECK_HARD_IS_EXISTS(str);
@@ -598,7 +590,8 @@ void dothelist1(struct gc_linked_list *list) {
     }
 }
 
-void dothelist2(struct gc_linked_list *list) {
+void dothelist2(struct gc_linked_list *list)
+{
     for (int i = 0; i < 8; i += 1) {
         char buf[32];
         sprintf(buf, "%d", i);
@@ -607,7 +600,8 @@ void dothelist2(struct gc_linked_list *list) {
     dothelist1(list);
 }
 
-void test_list() {
+void test_list()
+{
     struct gc_linked_list *list = gc_list_new();
     for (int i = 0; i < 32; i += 1) {
         char buf[32];
@@ -618,7 +612,8 @@ void test_list() {
     dothelist2(list);
 }
 
-static char* gc_readfile(const char *filename) {
+static char* gc_readfile(const char *filename)
+{
     FILE *fp = NULL;
     size_t n, sz;
 
@@ -649,7 +644,8 @@ static char* gc_readfile(const char *filename) {
     return NULL;
 }
 
-static void test_with_files() {
+static void test_with_files()
+{
     DIR *d = NULL;
     struct dirent *dir;
     char *path = ".....";
@@ -670,7 +666,8 @@ static void test_with_files() {
     }
 }
 
-int do_main(int argc, char **argv) {
+int do_main(int argc, char **argv)
+{
 
     test_list();
     char *str = alloc_mem(1024);
@@ -681,7 +678,8 @@ int do_main(int argc, char **argv) {
     return 0;
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
     gc_init(&GC, &argc);
     return do_main(argc, argv);
 }
