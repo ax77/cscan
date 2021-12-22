@@ -1,12 +1,10 @@
 #include "core_list.h"
 
-LinkedList * list_new(list_equal_fn equal_fn)
+LinkedList * list_new(equal_fn equal_fn)
 {
     assert(equal_fn);
 
-    LinkedList *list = malloc(sizeof(LinkedList));
-    assert(list && "list malloc");
-
+    LinkedList *list = cc_malloc(sizeof(LinkedList));
     list->first = list->last = NULL;
     list->size = 0;
 
@@ -16,8 +14,7 @@ LinkedList * list_new(list_equal_fn equal_fn)
 
 ListNode * list_node_new(ListNode *prev, void *e, ListNode *next)
 {
-    ListNode *node = malloc(sizeof(ListNode));
-    assert(node && "node malloc");
+    ListNode *node = cc_malloc(sizeof(ListNode));
     node->prev = prev;
     node->item = e;
     node->next = next;

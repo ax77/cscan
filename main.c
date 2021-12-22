@@ -407,7 +407,7 @@ void test_array_0()
     }
 }
 
-static bool strequal(void *a, void *b)
+static int strequal(void *a, void *b)
 {
     char *str_1 = (char*) a;
     char *str_2 = (char*) b;

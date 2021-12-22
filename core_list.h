@@ -7,6 +7,8 @@
 #include <stddef.h>
 #include <assert.h>
 #include <stdbool.h>
+#include "core_fnptrs.h"
+#include "core_mem.h"
 
 // simple, but fast double linked list, rewritten from JDK.
 // why [void*] instead of macros?
@@ -23,7 +25,6 @@
 
 typedef struct linked_list LinkedList;
 typedef struct list_node ListNode;
-typedef int (*list_equal_fn)(void* a, void* b);
 
 struct list_node {
     void *item;
@@ -33,11 +34,11 @@ struct list_node {
 
 struct linked_list {
     struct list_node *first, *last;
-    list_equal_fn equal_fn;
+    equal_fn equal_fn;
     size_t size;
 };
 
-LinkedList * list_new(list_equal_fn equal_fn);
+LinkedList * list_new(equal_fn equal_fn);
 ListNode * list_node_new(ListNode *prev, void *e, ListNode *next);
 ListNode * list_get_node(LinkedList *list, size_t index);
 

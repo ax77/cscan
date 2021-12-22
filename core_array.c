@@ -1,7 +1,7 @@
 #include "core_array.h"
 #include "core_mem.h"
 
-ArrayList * array_new(array_free_fn free_fn)
+ArrayList * array_new(free_fn free_fn)
 {
     assert(free_fn);
 

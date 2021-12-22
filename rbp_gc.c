@@ -75,7 +75,6 @@ struct core_gc GC;
 
 static const size_t GC_KB = 1024;
 static const size_t GC_MB = 1024 * 1024;
-static const size_t LIMIT = 256; // (1024 * 1024) * 8; // when do we need run gc
 
 #define PRINT_GC_INVOKED_STAT (0)
 #define CHECK_HARD_IS_EXISTS(ptr) cc_assert_true(HashMap_get(GC.heap, ptr))
@@ -281,15 +280,17 @@ static void free_mem(struct core_gc_ptr **mem)
     assert((*mem)->ptr);
     assert((*mem)->size);
 
+    GC.bytes_allocated -= (*mem)->size;
+    GC.totally_deallocated += (*mem)->size;
+
     free((*mem)->ptr);
     (*mem)->ptr = NULL;
 
     free((*mem)->location);
     (*mem)->location = NULL;
 
-    GC.bytes_allocated -= (*mem)->size;
-    GC.totally_deallocated += (*mem)->size;
     (*mem)->size = 0;
+    (*mem)->marked = 0;
 
     free(*mem);
     *mem = NULL;
