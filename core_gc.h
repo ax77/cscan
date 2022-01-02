@@ -19,7 +19,6 @@
 #include <assert.h>
 #include <limits.h>
 #include <stdarg.h>
-#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -77,16 +76,19 @@ struct core_gc {
 };
 
 void gc_init(struct core_gc *gc, void *bottom);
-void gc_print_stat();
+void gc_print_stat(struct core_gc *gc);
 
-#define gc_malloc(size) gc_alloc_mem_internal(size, __FILE__, __func__, __LINE__)
-void* gc_alloc_mem_internal(size_t size, const char *_file, const char *_func, int _line);
+#define gc_malloc(gc, size) gc_alloc_mem_internal(gc, size, __FILE__, __func__, __LINE__)
+void* gc_alloc_mem_internal(struct core_gc *gc, size_t size, const char *_file, const char *_func, int _line);
 
-#define gc_realloc(ptr, newsize) gc_realloc_mem_internal(ptr, newsize, __FILE__, __func__, __LINE__)
-void* gc_realloc_mem_internal(void *ptr, size_t newsize, const char *, const char *, int);
+#define gc_realloc(gc, ptr, newsize) gc_realloc_mem_internal(gc, ptr, newsize, __FILE__, __func__, __LINE__)
+void* gc_realloc_mem_internal(struct core_gc *gc, void *ptr, size_t newsize, const char *, const char *, int);
 
-#define gc_strdup(str) gc_strdup_internal(str, __FILE__, __func__, __LINE__)
-char* gc_strdup_internal(char *str, const char *_file, const char *_func, int _line);
+#define gc_strdup(gc, str) gc_strdup_internal(gc, str, __FILE__, __func__, __LINE__)
+char* gc_strdup_internal(struct core_gc *gc, char *str, const char *_file, const char *_func, int _line);
+
+#define gc_forced_free(gc, ptr) gc_forced_free_internal(gc, ptr, __FILE__, __func__, __LINE__)
+void gc_forced_free_internal(struct core_gc *gc, void *ptr, const char *_file, const char *_func, int _line);
 
 /// UTIL
 
