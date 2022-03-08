@@ -12,6 +12,7 @@
 
 struct core_gc GC;
 
+#if 0
 int do_main(int argc, char **argv) {
     char *str = gc_malloc(&GC, 1024);
     str = gc_realloc(&GC, str, 2048);
@@ -35,3 +36,4 @@ int main(int argc, char **argv) {
     return do_main(argc, argv);
 }
 
+#endif

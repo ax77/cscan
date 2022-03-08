@@ -1,147 +1,151 @@
 #include "core_buf.h"
 #include "core_mem.h"
 
-static size_t min(size_t a, size_t b) {
-    if (a < b) {
-        return a;
-    }
-    return b;
-}
+#define BUFFER_PADDING (32)
 
-Cbuffer *ccbuf_new(char *from) {
-    assert(from);
+Cbuffer* ccbuf_new(char *from) {
+	assert(from);
 
-    Cbuffer *r = cc_malloc(sizeof(Cbuffer));
+	Cbuffer *r = cc_malloc(sizeof(Cbuffer));
 
-    char * source = cc_strdup(from);
-    size_t buflen = strlen(from);
+	char *source = cc_strdup(from);
+	size_t buflen = strlen(from);
 
-    // +32 : some little padding, when we check the buffer like this: buffer[index + 2].
-    size_t alloclen = (buflen + 32) * sizeof(char);
+	// +32 : some little padding, when we check the buffer like this: buffer[index + 2].
+	size_t alloclen = (buflen + BUFFER_PADDING) * sizeof(char);
 
-    r->buf = (char*) cc_malloc(alloclen);
-    for (size_t j = 0; j < alloclen; j++) {
-        r->buf[j] = '\0';
-    }
+	r->buf = (char*) cc_malloc(alloclen);
+	for (size_t j = 0; j < alloclen; j++) {
+		r->buf[j] = '\0';
+	}
 
-    strcpy(r->buf, source);
+	// Ignore the BOM, if any.
+	size_t offset = 0;
+	if (buflen > 3) {
+		if (source[0] == 0xef && source[1] == 0xbb && source[2] == 0xbf) {
+			offset = 3;
+		}
+	}
+	for (size_t i = offset; i < buflen && source[i]; i++) {
+		r->buf[i] = source[i];
+	}
 
-    r->size = buflen;
-    r->offset = 0;
+	r->size = buflen;
+	r->offset = offset;
 
-    r->line = 1;
-    r->column = 0;
+	r->line = 1;
+	r->column = 0;
 
-    r->prevc = 0;
-    r->eofs = -1;
+	r->prevc = 0;
+	r->eofs = -1;
 
-    return r;
+	return r;
 }
 
 int nextc(Cbuffer *b) {
-    // when you build buffer, allocate more space to avoid IOOB check
-    // for example: source = { '1', '2', '3', '\0' }, buffer = { '1', '2', '3', '\0', '\0', '\0', '\0', '\0' }
 
-    for (;;) {
+	for (;;) {
 
-        if (b->eofs > 0) {
-            cc_fatal("Infinite loop handling...");
-        }
+		if (b->eofs >= (BUFFER_PADDING - 8)) {
+			// cc_fatal("Infinite loop handling...");
+		}
 
-        if (b->prevc == '\n') {
-            b->line++;
-            b->column = 0;
-        }
+		if (b->offset >= b->size) {
+			b->eofs++;
+			return HC_FEOF; // '\0';
+		}
 
-        if (b->buf[b->offset] == '\\') {
-            if (b->buf[b->offset + 1] == '\r') {
-                if (b->buf[b->offset + 2] == '\n') {
-                    // DOS: [\][\r][\n]
-                    b->offset += 3;
-                } else {
-                    // OSX: [\][\r]
-                    b->offset += 2;
-                }
+		if (b->prevc == '\n') {
+			b->line++;
+			b->column = 0;
+		}
 
-                b->prevc = '\n';
-                continue;
-            }
+		// we'are able to ignore the IOOB, because our buffer has a nice padding \0
+		int c1 = b->buf[b->offset + 0];
+		int c2 = b->buf[b->offset + 1];
+		int c3 = b->buf[b->offset + 2];
 
-            // UNX: [\][\n]
-            if (b->buf[b->offset + 1] == '\n') {
-                b->offset += 2;
-                b->prevc = '\n';
-                continue;
-            }
-        }
+		// let's handle the line-joining
+		//
+		if (c1 == '\\') {
+			if (c2 == '\r') {
+				if (c3 == '\n') {
+					// DOS: [\][\r][\n]
+					b->offset += 3;
+				} else {
+					// OSX: [\][\r]
+					b->offset += 2;
+				}
 
-        if (b->buf[b->offset] == '\r') {
-            if (b->buf[b->offset + 1] == '\n') {
-                // DOS: [\r][\n]
-                b->offset += 2;
-            } else {
-                // OSX: [\r]
-                b->offset += 1;
-            }
-            b->prevc = '\n';
-            return '\n';
-        }
+				b->prevc = '\n';
+				continue;
+			}
 
-        if (b->offset == b->size) {
-            b->eofs++;
-            return HC_FEOF; // '\0';
-        }
+			// UNX: [\][\n]
+			if (c2 == '\n') {
+				b->offset += 2;
+				b->prevc = '\n';
+				continue;
+			}
+		}
 
-        int next = b->buf[b->offset++];
-        b->column++;
-        b->prevc = next;
+		if (c1 == '\r') {
+			if (c2 == '\n') {
+				// DOS: [\r][\n]
+				b->offset += 2;
+			} else {
+				// OSX: [\r]
+				b->offset += 1;
+			}
+			b->prevc = '\n';
+			return '\n';
+		}
 
-        if (next == '\0') {
-            b->eofs++;
-            return HC_FEOF; // '\0';
-        }
+		// get the char at the current offset
+		//
+		int next = b->buf[b->offset++];
+		b->prevc = next;
 
-        return next;
-    }
+		if (next == '\t') {
+			b->column += 4;
+		} else {
+			b->column += 1;
+		}
 
-    return HC_FEOF;
+		if (next == '\0') {
+			b->eofs++;
+			return HC_FEOF; // '\0';
+		}
+
+		return next;
+	}
+
+	return HC_FEOF;
 }
 
-static int nextis_internal(Cbuffer *b, char *what) {
-    // buffer: "adcde"
-    // what  : "abcdef"
-    // is false positive may be here. because we check first 5 chars, min...
-    size_t wlen = strlen(what);
-    if (wlen > b->size) {
-        return 0; // avoid false positive
-    }
+int* next4(Cbuffer *buf) {
+	assert(buf);
 
-    size_t m = min(b->size, wlen);
-    for (size_t i = 0; i < m; i++) {
-        int exp = what[i];
-        int act = nextc(b);
-        if (exp != act) {
-            return 0;
-        }
-    }
-    return 1;
-}
+	size_t size = buf->size;
+	size_t offset = buf->offset;
+	size_t line = buf->line;
+	size_t column = buf->column;
+	int prevc = buf->prevc;
+	int eofs = buf->eofs;
 
-int nextis(Cbuffer *b, char *what) {
-    size_t offset_save = b->offset;
-    size_t line_save = b->line;
-    size_t column_save = b->column;
-    int prevc_save = b->prevc;
-    int eofs_save = b->eofs;
+	static int lookup[4] = { -1, -1, -1, -1 };
+	lookup[0] = nextc(buf);
+	lookup[1] = nextc(buf);
+	lookup[2] = nextc(buf);
+	lookup[3] = nextc(buf);
 
-    int result = nextis_internal(b, what);
+	buf->size = size;
+	buf->offset = offset;
+	buf->line = line;
+	buf->column = column;
+	buf->prevc = prevc;
+	buf->eofs = eofs;
 
-    b->offset = offset_save;
-    b->line = line_save;
-    b->column = column_save;
-    b->prevc = prevc_save;
-    b->eofs = eofs_save;
-
-    return result;
+	return lookup;
 }
 

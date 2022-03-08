@@ -25,6 +25,6 @@ struct ccbuf {
 
 Cbuffer *ccbuf_new(char *from);
 int nextc(Cbuffer *b);
-int nextis(Cbuffer *b, char *what);
+int* next4(Cbuffer *buf);
 
 #endif /* CORE_BUF_H_ */
