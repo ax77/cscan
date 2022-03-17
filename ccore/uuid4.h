@@ -23,6 +23,12 @@
 #ifndef UUID4GEN_
 #define UUID4GEN_
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
+#include <time.h>
+
 uint8_t uuid4gen(char *);
 static uint8_t uuid4init = 0;
 

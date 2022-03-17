@@ -1,7 +1,7 @@
 #ifndef STR_H_
 #define STR_H_
 
-#include "cheaders.h"
+#include "hdrs.h"
 #include "vec.h"
 
 typedef struct strbuilder Str;

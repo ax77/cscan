@@ -20,13 +20,7 @@
  * THE SOFTWARE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
-#include <time.h>
-#include "uuid4gen.h"
-
+#include "uuid4.h"
 
 /*
  * Generate an UUID version 4 and stores it into a string

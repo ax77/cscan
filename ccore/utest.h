@@ -17,6 +17,6 @@
     , __FILE__, __func__, __LINE__, #expr);\
     exit(128);\
   }\
-}while(0)
+} while(0)
 
 #endif /* UTEST_H_ */

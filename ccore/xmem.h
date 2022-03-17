@@ -1,7 +1,7 @@
 #ifndef XMEM_H_
 #define XMEM_H_
 
-#include "cheaders.h"
+#include "hdrs.h"
 
 #define cc_fatal(fmt, ...) internal_fatal(__FILE__, __LINE__, __FUNCTION__, fmt, ##__VA_ARGS__)
 void internal_fatal(const char *_file, int _line, const char *_function, const char *fmt, ...);

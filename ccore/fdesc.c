@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include "fdesc.h"
+#include "xmem.h"
 
 /// size_t read(int fd, void *buffer, size_t size);
 ///
@@ -150,24 +151,18 @@ int hb_close(int fd)
 
 char* hb_readfile(const char *filename, size_t *szout)
 {
-    FILE *fp = NULL;
-    size_t n, sz;
-
-    char *data = NULL;
-    fp = fopen(filename, "rb");
+    FILE *fp = fopen(filename, "rb");
     assert(fp && "file does not exists.");
 
     fseek(fp, 0, SEEK_END);
-    sz = ftell(fp);
+    size_t sz = ftell(fp);
     rewind(fp);
 
     *szout = sz;
-
-    data = malloc(sz + 1);
-    assert(data && "malloc fail");
+    char *data = cc_malloc(sz + 1);
 
     data[sz] = '\0';
-    n = fread(data, 1, sz, fp);
+    size_t n = fread(data, 1, sz, fp);
     if (n != sz) {
         goto fail;
     }

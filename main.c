@@ -5,14 +5,15 @@
 #include <assert.h>
 #include <time.h>
 
-#include "buf.h"
-#include "uuid4gen.h"
-#include "map.h"
-#include "str.h"
-#include "utest.h"
-#include "vec.h"
-#include "xmem.h"
-#include "list.h"
+#include "ccore/buf.h"
+#include "ccore/map.h"
+#include "ccore/str.h"
+#include "ccore/utest.h"
+#include "ccore/vec.h"
+#include "ccore/xmem.h"
+#include "ccore/list.h"
+#include "ccore/uuid4.h"
+#include "ccore/fdesc.h"
 
 void test_strstarts_1()
 {
@@ -383,6 +384,13 @@ void test_replace_0()
     assert_true(streq(sb_replace(where, olds, news)->str, ".diance"));
 }
 
+void test_fread()
+{
+//    size_t s = 0;
+//    char *txt = hb_readfile("main.c", &s);
+//    assert(txt);
+}
+
 int main(void)
 {
 
@@ -428,6 +436,8 @@ int main(void)
     list_test4();
     list_test5();
     list_test6();
+
+    test_fread();
 
     //char buf[64];
     //for (int i = 0; i < 10; i += 1) {

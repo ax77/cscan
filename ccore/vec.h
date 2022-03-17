@@ -1,8 +1,8 @@
 #ifndef VEC_H_
 #define VEC_H_
 
-#include "cheaders.h"
 #include "fnptr.h"
+#include "hdrs.h"
 
 typedef struct vec vec;
 struct vec {
