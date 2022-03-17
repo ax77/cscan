@@ -1,7 +1,7 @@
-#ifndef CORE_ASCII_H_
-#define CORE_ASCII_H_
+#ifndef ASCII_H_
+#define ASCII_H_
 
-#include "core_mem.h"
+#include "xmem.h"
 
 static int is_letter(int c)
 {
@@ -182,4 +182,4 @@ static int char_value(int base, int c)
     return 0;
 }
 
-#endif /* CORE_ASCII_H_ */
+#endif /* ASCII_H_ */

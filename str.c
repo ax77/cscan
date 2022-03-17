@@ -1,5 +1,5 @@
-#include "core_strutil.h"
-#include "core_mem.h"
+#include "str.h"
+#include "xmem.h"
 
 int strstarts(char *what, char *with)
 {
@@ -43,31 +43,31 @@ int strends(char *what, char *with)
     return 1;
 }
 
-StringBuilder *sb_new()
+Str *sb_new()
 {
-    StringBuilder *rv = malloc(sizeof(StringBuilder));
+    Str *rv = cc_malloc(sizeof(Str));
     rv->len = 0;
     rv->alloc = 8;
     rv->offset = 0;
-    rv->str = malloc(rv->alloc * sizeof(char));
+    rv->str = cc_malloc(rv->alloc * sizeof(char));
     rv->str[rv->len] = '\0';
     return rv;
 }
 
-StringBuilder *sb_news(char * str)
+Str *sb_news(char * str)
 {
-    StringBuilder *rv = sb_new();
+    Str *rv = sb_new();
     sb_adds(rv, str);
     return rv;
 }
 
-static void sb_grow(StringBuilder *s)
+static void sb_grow(Str *s)
 {
     s->alloc *= 2;
-    s->str = realloc(s->str, s->alloc * sizeof(char));
+    s->str = cc_realloc(s->str, s->alloc * sizeof(char));
 }
 
-void sb_addc(StringBuilder *s, char c)
+void sb_addc(Str *s, char c)
 {
     if (!c) {
         return;
@@ -79,7 +79,7 @@ void sb_addc(StringBuilder *s, char c)
     s->str[s->len] = '\0';
 }
 
-void sb_adds(StringBuilder *s, char *news)
+void sb_adds(Str *s, char *news)
 {
     if (!news) {
         return;
@@ -89,18 +89,18 @@ void sb_adds(StringBuilder *s, char *news)
     }
 }
 
-StringBuilder *sb_copy(StringBuilder *what)
+Str *sb_copy(Str *what)
 {
-    StringBuilder *res = sb_new();
+    Str *res = sb_new();
     sb_adds(res, what->str);
     return res;
 }
 
-StringBuilder *sb_left(StringBuilder *from, size_t much)
+Str *sb_left(Str *from, size_t much)
 {
     assert(from && from->str);
 
-    StringBuilder *res = sb_new();
+    Str *res = sb_new();
     // I) empty one or another.
     if (from->len == 0 || much == 0) {
         return res;
@@ -116,11 +116,11 @@ StringBuilder *sb_left(StringBuilder *from, size_t much)
     return res;
 }
 
-StringBuilder *sb_right(StringBuilder *from, size_t much)
+Str *sb_right(Str *from, size_t much)
 {
     assert(from && from->str);
 
-    StringBuilder *res = sb_new();
+    Str *res = sb_new();
     // I) empty one or another.
     if (from->len == 0 || much == 0) {
         return res;
@@ -137,11 +137,11 @@ StringBuilder *sb_right(StringBuilder *from, size_t much)
     return res;
 }
 
-StringBuilder *sb_mid(StringBuilder *from, size_t begin, size_t much)
+Str *sb_mid(Str *from, size_t begin, size_t much)
 {
     assert(from && from->str);
 
-    StringBuilder *res = sb_new();
+    Str *res = sb_new();
     // I) empty
     if (begin >= from->len) {
         return res;
@@ -160,11 +160,11 @@ StringBuilder *sb_mid(StringBuilder *from, size_t begin, size_t much)
     return res;
 }
 
-StringBuilder *sb_trim(StringBuilder *from)
+Str *sb_trim(Str *from)
 {
     assert(from && from->str);
 
-    StringBuilder *res = sb_new();
+    Str *res = sb_new();
     if (from->len == 0) {
         return res;
     }
@@ -192,7 +192,7 @@ StringBuilder *sb_trim(StringBuilder *from)
     return res;
 }
 
-static void sb_free(StringBuilder ** sb)
+static void sb_free(Str ** sb)
 {
     if (*sb) {
 
@@ -209,28 +209,21 @@ static void sb_free(StringBuilder ** sb)
     }
 }
 
-static bool strequal(void *a, void *b)
+vec * sb_split_char(Str * where, char sep, bool include_empty)
 {
-    char *str_1 = (char*) a;
-    char *str_2 = (char*) b;
-    return strcmp(str_1, str_2) == 0;
-}
-
-LinkedList * sb_split_char(StringBuilder * where, char sep, bool include_empty)
-{
-    LinkedList * lines = list_new(strequal);
+    vec * lines = vec_new();
     size_t len = where->len;
 
     if (len == 0) {
         return lines;
     }
 
-    StringBuilder * sb = sb_new();
+    Str * sb = sb_new();
     for (size_t i = 0; i < len; i++) {
         char c = where->str[i];
         if (c == sep) {
             if (sb->len > 0 || (sb->len == 0 && include_empty)) {
-                list_push_back(lines, cc_strdup(sb->str));
+                vec_push(lines, cc_strdup(sb->str));
             }
 
             sb_free(&sb);
@@ -242,87 +235,31 @@ LinkedList * sb_split_char(StringBuilder * where, char sep, bool include_empty)
     }
 
     if (sb->len > 0 || (sb->len == 0 && include_empty)) {
-        list_push_back(lines, cc_strdup(sb->str));
+        vec_push(lines, cc_strdup(sb->str));
     }
 
     sb_free(&sb);
     return lines;
 }
 
-//  public boolean nextIs(final String input, final String pattern, int inputLen, int beginIndex, int endIndex) {
-//    if (endIndex > inputLen) {
-//      return false;
-//    }
-//    final String substring = input.substring(beginIndex, endIndex);
-//    return substring.equals(pattern);
-//  }
-//
-//  //  Выражение Значение  Тип
-//  //  СтрЗаменить("012", "", ".") "012" Строка
-//  //  СтрЗаменить("012", "", "")  "012" Строка
-//  //  СтрЗаменить("012", неопределено, ".") "012" Строка
-//  //  СтрЗаменить("012", неопределено, неопределено)  "012" Строка
-//  //  СтрЗаменить("012", "0", неопределено) "12"  Строка
-//
-//  private String str_replace(final String input, final String pattern, final String replacement) {
-//
-//    if (input == null) {
-//      // it is more clear and simple to return empty value instead of null or exception.
-//      // because otherwise you should check the return value that it isn't null, and so on.
-//      // who cares about that? null or not null, we return empty string here.
-//      // and we'll work with this empty string in invocation point instead of that null.
-//      return "";
-//    }
-//
-//    if (pattern == null || pattern.length() == 0) {
-//      return new String(input);
-//    }
-//
-//    String replacementInternal = replacement; // only to keep parameter as 'final'
-//    if (replacementInternal == null) {
-//      replacementInternal = "";
-//    }
-//
-//    final int inputLen = input.length();
-//    final int patternLen = pattern.length();
-//    final int replacementLen = replacementInternal.length();
-//
-//    StringBuilder sb = new StringBuilder();
-//
-//    for (int offset = 0; offset < inputLen;) {
-//      final int endIndex = patternLen + offset;
-//      if (nextIs(input, pattern, inputLen, offset, endIndex)) {
-//        if (replacementLen > 0) {
-//          sb.append(replacementInternal);
-//        }
-//        offset += patternLen;
-//      } else {
-//        sb.append(input.charAt(offset));
-//        offset++;
-//      }
-//    }
-//    return sb.toString();
-//  }
+// Выражение Значение  Тип
+// СтрЗаменить("012", "", ".") "012" Строка
+// СтрЗаменить("012", "", "")  "012" Строка
+// СтрЗаменить("012", неопределено, ".") "012" Строка
+// СтрЗаменить("012", неопределено, неопределено)  "012" Строка
+// СтрЗаменить("012", "0", неопределено) "12"  Строка
 
-//  public boolean nextIs(final String input, final String pattern, int inputLen, int beginIndex, int endIndex) {
-//    if (endIndex > inputLen) {
-//      return false;
-//    }
-//    final String substring = input.substring(beginIndex, endIndex);
-//    return substring.equals(pattern);
-//  }
-
-static bool next_is(StringBuilder * input, char * pattern, size_t input_len, size_t begin_index,
+static bool next_is(Str * input, char * pattern, size_t input_len, size_t begin_index,
         size_t end_index, size_t patternLen)
 {
     if (end_index > input_len) {
         return false;
     }
-    StringBuilder * substring = sb_mid(input, begin_index, patternLen);
+    Str * substring = sb_mid(input, begin_index, patternLen);
     return strcmp(substring->str, pattern) == 0;
 }
 
-StringBuilder * sb_replace(StringBuilder * input, char * pattern, char *replacement)
+Str * sb_replace(Str * input, char * pattern, char *replacement)
 {
     if (input == NULL) {
         // it is more clear and simple to return empty value instead of null or exception.
@@ -335,19 +272,19 @@ StringBuilder * sb_replace(StringBuilder * input, char * pattern, char *replacem
     if (pattern == NULL || strlen(pattern) == 0) {
         return sb_news(input->str);
     }
-    size_t inputLen = input->len;
-    size_t patternLen = strlen(pattern);
-    size_t replacementLen = strlen(replacement);
+    size_t input_len = input->len;
+    size_t pattern_len = strlen(pattern);
+    size_t repl_len = strlen(replacement);
 
-    StringBuilder * sb = sb_new();
+    Str * sb = sb_new();
 
-    for (size_t offset = 0; offset < inputLen;) {
-        size_t endIndex = patternLen + offset;
-        if (next_is(input, pattern, inputLen, offset, endIndex, patternLen)) {
-            if (replacementLen > 0) {
+    for (size_t offset = 0; offset < input_len;) {
+        size_t endIndex = pattern_len + offset;
+        if (next_is(input, pattern, input_len, offset, endIndex, pattern_len)) {
+            if (repl_len > 0) {
                 sb_adds(sb, replacement);
             }
-            offset += patternLen;
+            offset += pattern_len;
         } else {
             sb_addc(sb, input->str[offset]);
             offset++;
@@ -356,7 +293,7 @@ StringBuilder * sb_replace(StringBuilder * input, char * pattern, char *replacem
     return sb;
 }
 
-int sb_nextc(struct strbuilder *buf)
+int sb_nextc(Str *buf)
 {
     assert(buf && buf->str);
     if (buf->offset >= buf->len) {
@@ -365,7 +302,7 @@ int sb_nextc(struct strbuilder *buf)
     return buf->str[buf->offset++];
 }
 
-int sb_peekc(struct strbuilder *buf)
+int sb_peekc(Str *buf)
 {
     assert(buf && buf->str);
     if (buf->offset >= buf->len) {

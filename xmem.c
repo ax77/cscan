@@ -1,4 +1,4 @@
-#include "core_mem.h"
+#include "xmem.h"
 
 void internal_fatal(const char *_file, int _line, const char *_func,
 		const char *fmt, ...) {

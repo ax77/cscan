@@ -1,10 +1,9 @@
-#include "hashmap.h"
-#include "core_mem.h"
-
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "map.h"
+#include "xmem.h"
 
 static const size_t kDefaultCapacity = 11;
 static const float kLoadFactor = 0.75;

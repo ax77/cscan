@@ -1,5 +1,5 @@
-#ifndef CORE_MEM_H_
-#define CORE_MEM_H_
+#ifndef XMEM_H_
+#define XMEM_H_
 
 #include "cheaders.h"
 

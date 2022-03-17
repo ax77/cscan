@@ -3,7 +3,8 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include "core_fnptrs.h"
+
+#include "fnptr.h"
 
 typedef struct hashmap HashMap;
 typedef struct entry Entry;

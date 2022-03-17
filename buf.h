@@ -1,5 +1,5 @@
-#ifndef CORE_BUF_H_
-#define CORE_BUF_H_
+#ifndef BUF_H_
+#define BUF_H_
 
 #include <assert.h>
 #include <ctype.h>
@@ -14,17 +14,17 @@
 
 #define HC_FEOF (-1)
 
-typedef struct ccbuf Cbuffer;
+typedef struct char_buf CharBuf;
 
-struct ccbuf {
+struct char_buf {
     char *buf;
     size_t size, offset;
     size_t line, column;
     int prevc, eofs;
 };
 
-Cbuffer *ccbuf_new(char *from);
-int nextc(Cbuffer *b);
-int* next4(Cbuffer *buf);
+CharBuf *charbuf_new(char *from);
+int nextc(CharBuf *b);
+int* next4(CharBuf *buf);
 
-#endif /* CORE_BUF_H_ */
+#endif /* BUF_H_ */

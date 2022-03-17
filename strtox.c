@@ -8,10 +8,10 @@
 #include <stdarg.h>
 #include <math.h>
 
-#include "core_ascii.h"
-#include "core_buf.h"
-#include "core_mem.h"
-#include "core_strutil.h"
+#include "ascii.h"
+#include "buf.h"
+#include "str.h"
+#include "xmem.h"
 
 //////////////////////////////////////////////////////////////////////
 // TODO: rust suffixes https://doc.rust-lang.org/reference/tokens.html:

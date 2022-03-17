@@ -15,17 +15,7 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <fcntl.h>
-
-// stub, for tests
-struct bytes_array {
-    char *data;
-    size_t size;
-};
-
-int hb_read_byte(int fd);
-int hb_open(char *filename);
-int hb_check_is_file(int fd);
-int hb_read_bytes(int fd, struct bytes_array *buffer, size_t count);
+#include "fdesc.h"
 
 /// size_t read(int fd, void *buffer, size_t size);
 ///
@@ -126,25 +116,23 @@ int hb_get_file_size(int fd, size_t *result)
     return 1;
 }
 
-int hb_read_bytes(int fd, struct bytes_array *buffer, size_t count)
+ssize_t hb_read_bytes(int fd, void *buffer, size_t count)
 {
     assert(fd > 0);
     assert(buffer);
-    assert(buffer->data);
     assert(count);
 
-    // 1) the count > allocated
-    if ((count + 1) >= buffer->size) {
-        assert(0 && "the buffer is not big enough.");
-    }
+    // // 1) the count > allocated
+    // if ((count + 1) >= buffer->size) {
+    //     assert(0 && "the buffer is not big enough.");
+    // }
 
-    ptrdiff_t nread = read(fd, buffer->data, count);
+    ssize_t nread = read(fd, buffer, count);
     if (nread == -1) {
         assert(0 && "cannot read from the file.");
     }
 
-    buffer->data[buffer->size] = '\0';
-    return 1;
+    return nread;
 }
 
 /// int close (int filedes);
@@ -152,9 +140,48 @@ int hb_read_bytes(int fd, struct bytes_array *buffer, size_t count)
 /// The normal return value from close is 0.
 /// A value of -1 is returned in case of failure.
 
-void hb_close(int fd)
+int hb_close(int fd)
 {
     assert(fd > 0);
     int result = close(fd);
     assert(result == 0);
+    return result;
+}
+
+char* hb_readfile(const char *filename, size_t *szout)
+{
+    FILE *fp = NULL;
+    size_t n, sz;
+
+    char *data = NULL;
+    fp = fopen(filename, "rb");
+    assert(fp && "file does not exists.");
+
+    fseek(fp, 0, SEEK_END);
+    sz = ftell(fp);
+    rewind(fp);
+
+    *szout = sz;
+
+    data = malloc(sz + 1);
+    assert(data && "malloc fail");
+
+    data[sz] = '\0';
+    n = fread(data, 1, sz, fp);
+    if (n != sz) {
+        goto fail;
+    }
+
+    fclose(fp);
+    return data;
+
+    fail: if (fp) {
+        fclose(fp);
+    }
+    if (data) {
+        free(data);
+    }
+
+    assert(0);
+    return NULL;
 }

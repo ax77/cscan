@@ -5,84 +5,83 @@
 #include <assert.h>
 #include <time.h>
 
-#include "core_list.h"
-#include "core_buf.h"
-#include "hashmap.h"
-#include "core_strutil.h"
-#include "core_file.h"
-#include "core_mem.h"
-#include "core_array.h"
+#include "buf.h"
 #include "uuid4gen.h"
-#include "core_unittests.h"
+#include "map.h"
+#include "str.h"
+#include "utest.h"
+#include "vec.h"
+#include "xmem.h"
+#include "list.h"
 
 void test_strstarts_1()
 {
     char *what = "1";
     char *with = "1";
-    cc_assert_true(strstarts(what, with));
+    assert_true(strstarts(what, with));
 }
 
 void test_strstarts_2()
 {
     char *what = "";
     char *with = " ";
-    cc_assert_true(!strstarts(what, with));
+    assert_true(!strstarts(what, with));
 }
 
 void test_strstarts_3()
 {
     char *what = "12345";
     char *with = "1234.";
-    cc_assert_true(!strstarts(what, with));
+    assert_true(!strstarts(what, with));
 }
 
 void test_strstarts_4()
 {
     char *what = "12345 ";
     char *with = "12345 ";
-    cc_assert_true(strstarts(what, with));
+    assert_true(strstarts(what, with));
 }
 
 void test_strstarts_5()
 {
-    cc_assert_true(strstarts("usr/local/include/", "usr"));
-    cc_assert_true(strstarts("usr/local/include/", "usr/local"));
-    cc_assert_true(strstarts("usr/local/include/", "usr/local/"));
+    assert_true(strstarts("usr/local/include/", "usr"));
+    assert_true(strstarts("usr/local/include/", "usr/local"));
+    assert_true(strstarts("usr/local/include/", "usr/local/"));
 }
 
 void test_strends_1()
 {
     char *what = "12345";
     char *with = "45";
-    cc_assert_true(strends(what, with));
+    assert_true(strends(what, with));
 }
 
 void test_strends_2()
 {
     char *what = "12345";
     char *with = " 45";
-    cc_assert_true(!strends(what, with));
+    assert_true(!strends(what, with));
 }
 
 void test_strends_3()
 {
     char *what = "12345";
     char *with = "12345";
-    cc_assert_true(strends(what, with));
+    assert_true(strends(what, with));
 }
 
 void test_strends_4()
 {
     char *what = "test/include";
     char *with = "include";
-    cc_assert_true(strends(what, with));
+    assert_true(strends(what, with));
 }
 
 void test_strends_5()
 {
-    cc_assert_true(strends("test/include", "include"));
-    cc_assert_true(strends("test/include", "/include"));
-    cc_assert_true(strends("test/include", "t/include"));
+    assert_true(strends("test/include", "include"));
+    assert_true(strends("test/include", "/include"));
+    assert_true(strends("test/include", "t/include"));
 }
 
 int streq(char *s1, char *s2)
@@ -96,7 +95,7 @@ void test_strleft_0()
     sb_adds(buf, "1024");
 
     struct strbuilder *res = sb_left(buf, 2);
-    cc_assert_true(streq(res->str, "10"));
+    assert_true(streq(res->str, "10"));
 }
 
 void test_strleft_1()
@@ -105,7 +104,7 @@ void test_strleft_1()
     sb_adds(buf, "1024");
 
     struct strbuilder *res = sb_left(buf, 200);
-    cc_assert_true(streq(res->str, "1024"));
+    assert_true(streq(res->str, "1024"));
 }
 
 void test_strleft_2()
@@ -114,7 +113,7 @@ void test_strleft_2()
     sb_adds(buf, "");
 
     struct strbuilder *res = sb_left(buf, 0);
-    cc_assert_true(streq(res->str, ""));
+    assert_true(streq(res->str, ""));
 }
 
 void test_strright_0()
@@ -123,7 +122,7 @@ void test_strright_0()
     sb_adds(buf, "1024");
 
     struct strbuilder *res = sb_right(buf, 2);
-    cc_assert_true(streq(res->str, "24"));
+    assert_true(streq(res->str, "24"));
 }
 
 void test_strright_1()
@@ -132,7 +131,7 @@ void test_strright_1()
     sb_adds(buf, "1024");
 
     struct strbuilder *res = sb_right(buf, 2000);
-    cc_assert_true(streq(res->str, "1024"));
+    assert_true(streq(res->str, "1024"));
 }
 
 void test_strmid_0()
@@ -141,7 +140,7 @@ void test_strmid_0()
     sb_adds(buf, "string_1024");
 
     struct strbuilder *res = sb_mid(buf, 0, 3);
-    cc_assert_true(streq(res->str, "str"));
+    assert_true(streq(res->str, "str"));
 }
 
 void test_strmid_1()
@@ -150,7 +149,7 @@ void test_strmid_1()
     sb_adds(buf, "string_1024");
 
     struct strbuilder *res = sb_mid(buf, 3, 300);
-    cc_assert_true(streq(res->str, "ing_1024"));
+    assert_true(streq(res->str, "ing_1024"));
 }
 
 void test_strmid_2()
@@ -159,7 +158,7 @@ void test_strmid_2()
     sb_adds(buf, "string_1024");
 
     struct strbuilder *res = sb_mid(buf, 3, 3);
-    cc_assert_true(streq(res->str, "ing"));
+    assert_true(streq(res->str, "ing"));
 }
 
 void test_strmid_3()
@@ -168,7 +167,7 @@ void test_strmid_3()
     sb_adds(buf, "string_1024");
 
     struct strbuilder *res = sb_mid(buf, 3, 8);
-    cc_assert_true(streq(res->str, "ing_1024"));
+    assert_true(streq(res->str, "ing_1024"));
 }
 
 void test_strmid_4()
@@ -177,7 +176,7 @@ void test_strmid_4()
     sb_adds(buf, "string_1024");
 
     struct strbuilder *res = sb_mid(buf, 3, 9);
-    cc_assert_true(streq(res->str, "ing_1024"));
+    assert_true(streq(res->str, "ing_1024"));
 }
 
 void test_strmid_5()
@@ -186,7 +185,7 @@ void test_strmid_5()
     sb_adds(buf, "string_1024");
 
     struct strbuilder *res = sb_mid(buf, 3, 7);
-    cc_assert_true(streq(res->str, "ing_102"));
+    assert_true(streq(res->str, "ing_102"));
 }
 
 void test_strtrim_0()
@@ -195,7 +194,7 @@ void test_strtrim_0()
     sb_adds(buf, "\n\n  string_1024 \n\n  \n\n\t \r\n\n ");
 
     struct strbuilder *res = sb_trim(buf);
-    cc_assert_true(streq(res->str, "string_1024"));
+    assert_true(streq(res->str, "string_1024"));
 }
 
 void test_strtrim_1()
@@ -204,45 +203,45 @@ void test_strtrim_1()
     sb_adds(buf, "string_1024");
 
     struct strbuilder *res = sb_trim(buf);
-    cc_assert_true(streq(res->str, "string_1024"));
+    assert_true(streq(res->str, "string_1024"));
 //printf("[%s]\n", res->str);
 }
 
 void test_buf_0()
 {
-    Cbuffer * buf = ccbuf_new("");
-    cc_assert_true(buf->size == 0);
+    CharBuf * buf = charbuf_new("");
+    assert_true(buf->size == 0);
 
     int c = nextc(buf);
-    cc_assert_true(c == HC_FEOF);
+    assert_true(c == HC_FEOF);
 }
 
 void test_buf_1()
 {
-    Cbuffer * buf = ccbuf_new("abc");
-    cc_assert_true(buf->size == 3);
+    CharBuf * buf = charbuf_new("abc");
+    assert_true(buf->size == 3);
 
-    cc_assert_true(nextc(buf) == 'a');
-    cc_assert_true(nextc(buf) == 'b');
-    cc_assert_true(nextc(buf) == 'c');
-    cc_assert_true(nextc(buf) == HC_FEOF);
+    assert_true(nextc(buf) == 'a');
+    assert_true(nextc(buf) == 'b');
+    assert_true(nextc(buf) == 'c');
+    assert_true(nextc(buf) == HC_FEOF);
 }
 
 void test_buf_2()
 {
-    Cbuffer * buf = ccbuf_new("a\\\nb\\\nc");
+    CharBuf * buf = charbuf_new("a\\\nb\\\nc");
 
-    cc_assert_true(nextc(buf) == 'a');
-    cc_assert_true(nextc(buf) == 'b');
-    cc_assert_true(nextc(buf) == 'c');
-    cc_assert_true(nextc(buf) == HC_FEOF);
+    assert_true(nextc(buf) == 'a');
+    assert_true(nextc(buf) == 'b');
+    assert_true(nextc(buf) == 'c');
+    assert_true(nextc(buf) == HC_FEOF);
 }
 
 void test_buf_3()
 {
     size_t s = 0;
-    char * source = readfile("main.c", &s);
-    Cbuffer * buf = ccbuf_new(source);
+    char * source = hb_readfile("main.c", &s);
+    CharBuf * buf = charbuf_new(source);
     for (;;) {
         int c = nextc(buf);
         if (c == HC_FEOF) {
@@ -254,39 +253,39 @@ void test_buf_3()
 
 void test_strmid_again()
 {
-    cc_assert_true(streq(sb_mid(sb_news("3f420a10-5465-"), 4, 9)->str, "0a10-5465"));
-    cc_assert_true(streq(sb_mid(sb_news("f8535dba-8cfa-"), 5, 9)->str, "dba-8cfa-"));
-    cc_assert_true(streq(sb_mid(sb_news("0b9edb1c-b2bb-"), 0, 6)->str, "0b9edb"));
-    cc_assert_true(streq(sb_mid(sb_news("f34285f2-5ffb-"), 3, 14)->str, "285f2-5ffb-"));
-    cc_assert_true(streq(sb_mid(sb_news("bff4aa0f-2727-"), 6, 11)->str, "0f-2727-"));
-    cc_assert_true(streq(sb_mid(sb_news("209a689c-527c-"), 10, 6)->str, "27c-"));
-    cc_assert_true(streq(sb_mid(sb_news("269da2ec-c7df-"), 0, 7)->str, "269da2e"));
-    cc_assert_true(streq(sb_mid(sb_news("22e0b7cb-21ec-"), 5, 4)->str, "7cb-"));
-    cc_assert_true(streq(sb_mid(sb_news("ad2b4db3-d89e-"), 6, 1)->str, "b"));
-    cc_assert_true(streq(sb_mid(sb_news("3833781d-b109-"), 3, 14)->str, "3781d-b109-"));
-    cc_assert_true(streq(sb_mid(sb_news("8e132b56-3832-"), 10, 9)->str, "832-"));
-    cc_assert_true(streq(sb_mid(sb_news("163e950d-3908-"), 7, 11)->str, "d-3908-"));
-    cc_assert_true(streq(sb_mid(sb_news("1d5f3c7b-ab4d-"), 7, 13)->str, "b-ab4d-"));
-    cc_assert_true(streq(sb_mid(sb_news("9e0a1634-9632-"), 0, 8)->str, "9e0a1634"));
-    cc_assert_true(streq(sb_mid(sb_news("7508749d-eabc-"), 11, 4)->str, "bc-"));
-    cc_assert_true(streq(sb_mid(sb_news("6c0e523b-1272-"), 9, 7)->str, "1272-"));
-    cc_assert_true(streq(sb_mid(sb_news("15635e34-69ac-"), 1, 10)->str, "5635e34-69"));
-    cc_assert_true(streq(sb_mid(sb_news("8f41d3d7-b717-"), 8, 7)->str, "-b717-"));
-    cc_assert_true(streq(sb_mid(sb_news("bf84b542-ba2b-"), 0, 11)->str, "bf84b542-ba"));
-    cc_assert_true(streq(sb_mid(sb_news("58ae2e21-4d2d-"), 12, 3)->str, "d-"));
-    cc_assert_true(streq(sb_mid(sb_news("fd255310-91d4-"), 4, 7)->str, "5310-91"));
-    cc_assert_true(streq(sb_mid(sb_news("ea840d0e-19de-"), 12, 8)->str, "e-"));
-    cc_assert_true(streq(sb_mid(sb_news("e5306b54-665d-"), 4, 6)->str, "6b54-6"));
-    cc_assert_true(streq(sb_mid(sb_news("7befdd16-cd27-"), 13, 3)->str, "-"));
-    cc_assert_true(streq(sb_mid(sb_news("de808b5f-9ebe-"), 0, 0)->str, ""));
-    cc_assert_true(streq(sb_mid(sb_news("34ecbaff-25a5-"), 2, 2)->str, "ec"));
-    cc_assert_true(streq(sb_mid(sb_news("4be184fd-573f-"), 0, 8)->str, "4be184fd"));
-    cc_assert_true(streq(sb_mid(sb_news("ffcf774c-e3c5-"), 0, 3)->str, "ffc"));
-    cc_assert_true(streq(sb_mid(sb_news("bf06c07c-240f-"), 4, 11)->str, "c07c-240f-"));
-    cc_assert_true(streq(sb_mid(sb_news("d4362892-993d-"), 13, 14)->str, "-"));
-    cc_assert_true(streq(sb_mid(sb_news("fc36edf4-647c-"), 6, 1)->str, "f"));
-    cc_assert_true(streq(sb_mid(sb_news("d39f9cbe-d1a0-"), 4, 3)->str, "9cb"));
-    cc_assert_true(streq(sb_mid(sb_news("56ed5dc4-d6cc-"), 9, 13)->str, "d6cc-"));
+    assert_true(streq(sb_mid(sb_news("3f420a10-5465-"), 4, 9)->str, "0a10-5465"));
+    assert_true(streq(sb_mid(sb_news("f8535dba-8cfa-"), 5, 9)->str, "dba-8cfa-"));
+    assert_true(streq(sb_mid(sb_news("0b9edb1c-b2bb-"), 0, 6)->str, "0b9edb"));
+    assert_true(streq(sb_mid(sb_news("f34285f2-5ffb-"), 3, 14)->str, "285f2-5ffb-"));
+    assert_true(streq(sb_mid(sb_news("bff4aa0f-2727-"), 6, 11)->str, "0f-2727-"));
+    assert_true(streq(sb_mid(sb_news("209a689c-527c-"), 10, 6)->str, "27c-"));
+    assert_true(streq(sb_mid(sb_news("269da2ec-c7df-"), 0, 7)->str, "269da2e"));
+    assert_true(streq(sb_mid(sb_news("22e0b7cb-21ec-"), 5, 4)->str, "7cb-"));
+    assert_true(streq(sb_mid(sb_news("ad2b4db3-d89e-"), 6, 1)->str, "b"));
+    assert_true(streq(sb_mid(sb_news("3833781d-b109-"), 3, 14)->str, "3781d-b109-"));
+    assert_true(streq(sb_mid(sb_news("8e132b56-3832-"), 10, 9)->str, "832-"));
+    assert_true(streq(sb_mid(sb_news("163e950d-3908-"), 7, 11)->str, "d-3908-"));
+    assert_true(streq(sb_mid(sb_news("1d5f3c7b-ab4d-"), 7, 13)->str, "b-ab4d-"));
+    assert_true(streq(sb_mid(sb_news("9e0a1634-9632-"), 0, 8)->str, "9e0a1634"));
+    assert_true(streq(sb_mid(sb_news("7508749d-eabc-"), 11, 4)->str, "bc-"));
+    assert_true(streq(sb_mid(sb_news("6c0e523b-1272-"), 9, 7)->str, "1272-"));
+    assert_true(streq(sb_mid(sb_news("15635e34-69ac-"), 1, 10)->str, "5635e34-69"));
+    assert_true(streq(sb_mid(sb_news("8f41d3d7-b717-"), 8, 7)->str, "-b717-"));
+    assert_true(streq(sb_mid(sb_news("bf84b542-ba2b-"), 0, 11)->str, "bf84b542-ba"));
+    assert_true(streq(sb_mid(sb_news("58ae2e21-4d2d-"), 12, 3)->str, "d-"));
+    assert_true(streq(sb_mid(sb_news("fd255310-91d4-"), 4, 7)->str, "5310-91"));
+    assert_true(streq(sb_mid(sb_news("ea840d0e-19de-"), 12, 8)->str, "e-"));
+    assert_true(streq(sb_mid(sb_news("e5306b54-665d-"), 4, 6)->str, "6b54-6"));
+    assert_true(streq(sb_mid(sb_news("7befdd16-cd27-"), 13, 3)->str, "-"));
+    assert_true(streq(sb_mid(sb_news("de808b5f-9ebe-"), 0, 0)->str, ""));
+    assert_true(streq(sb_mid(sb_news("34ecbaff-25a5-"), 2, 2)->str, "ec"));
+    assert_true(streq(sb_mid(sb_news("4be184fd-573f-"), 0, 8)->str, "4be184fd"));
+    assert_true(streq(sb_mid(sb_news("ffcf774c-e3c5-"), 0, 3)->str, "ffc"));
+    assert_true(streq(sb_mid(sb_news("bf06c07c-240f-"), 4, 11)->str, "c07c-240f-"));
+    assert_true(streq(sb_mid(sb_news("d4362892-993d-"), 13, 14)->str, "-"));
+    assert_true(streq(sb_mid(sb_news("fc36edf4-647c-"), 6, 1)->str, "f"));
+    assert_true(streq(sb_mid(sb_news("d39f9cbe-d1a0-"), 4, 3)->str, "9cb"));
+    assert_true(streq(sb_mid(sb_news("56ed5dc4-d6cc-"), 9, 13)->str, "d6cc-"));
 }
 
 struct token_simple {
@@ -344,8 +343,8 @@ void test_hashmap_pointers_1()
     HashMap_put(map, a1, "a3");
 
     char * res = (char*) HashMap_get(map, a1);
-    cc_assert_true(res);
-    cc_assert_true(streq(res, "a3"));
+    assert_true(res);
+    assert_true(streq(res, "a3"));
 
 //    for (size_t i = 0; i < map->capacity; i++) {
 //        Entry* e = map->table[i];
@@ -366,74 +365,24 @@ void test_hashmap_str_1()
     HashMap_put(map, "2", "2");
     HashMap_put(map, "3", "3");
 
-    cc_assert_true(HashMap_size(map) == 3);
-    cc_assert_true(streq(HashMap_get(map, "1"), "1"));
-    cc_assert_true(streq(HashMap_get(map, "2"), "2"));
-    cc_assert_true(streq(HashMap_get(map, "3"), "3"));
+    assert_true(HashMap_size(map) == 3);
+    assert_true(streq(HashMap_get(map, "1"), "1"));
+    assert_true(streq(HashMap_get(map, "2"), "2"));
+    assert_true(streq(HashMap_get(map, "3"), "3"));
 
     HashMap_put(map, "1", "0");
-    cc_assert_true(HashMap_size(map) == 3);
-    cc_assert_true(streq(HashMap_get(map, "1"), "0"));
-}
-
-void test_split_char_1()
-{
-    StringBuilder *input = sb_news("src/test/inlude/my/folder/to/std/headers/");
-    LinkedList * lines = sb_split_char(input, '/', false);
-    for (ListNode * node = lines->first; node; node = node->next) {
-        char *str = (char*) node->item;
-        assert(str);
-    }
+    assert_true(HashMap_size(map) == 3);
+    assert_true(streq(HashMap_get(map, "1"), "0"));
 }
 
 void test_replace_0()
 {
-    StringBuilder * where = sb_news("illidiance");
+    Str * where = sb_news("illidiance");
     char * olds = "illi";
     char * news = ".";
-    cc_assert_true(streq(sb_replace(where, olds, news)->str, ".diance"));
+    assert_true(streq(sb_replace(where, olds, news)->str, ".diance"));
 }
 
-void test_array_0()
-{
-    ArrayList *arr = array_new(&free);
-    for (int i = 0; i < 10; i++) {
-        char buf[32] = { '\0' };
-        sprintf(buf, "%05d", i);
-        array_add(arr, cc_strdup(buf));
-    }
-    for (size_t i = 0; i < arr->size; i++) {
-        //printf("%s\n", (char*) array_get(arr, i));
-    }
-}
-
-static int strequal(void *a, void *b)
-{
-    char *str_1 = (char*) a;
-    char *str_2 = (char*) b;
-    return strcmp(str_1, str_2) == 0;
-}
-
-void test_list_remove_0()
-{
-    LinkedList *list = list_new(strequal);
-    char *a = "a";
-    char *b = "b";
-    char *c = "c";
-
-    list_push_back(list, a);
-    list_push_back(list, b);
-    list_push_back(list, c);
-
-    list_remove(list, b);
-
-    for (ListNode *x = list->first; x; x = x->next) {
-        char *str = (char*) x->item;
-        printf("%s\n", str);
-    }
-}
-
-#if 0 // work with strtoX
 int main(void)
 {
 
@@ -470,20 +419,23 @@ int main(void)
     test_hashmap_pointers_1();
     test_hashmap_str_1();
 
-    test_split_char_1();
     test_replace_0();
 
-    test_array_0();
-    test_list_remove_0();
+    list_test0();
+    list_test1();
+    list_test2();
+    list_test3();
+    list_test4();
+    list_test5();
+    list_test6();
 
-    char buf[64];
-    for (int i = 0; i < 10; i += 1) {
-        uuid4gen(buf);
-        printf("%s\n", buf);
-    }
+    //char buf[64];
+    //for (int i = 0; i < 10; i += 1) {
+    //    uuid4gen(buf);
+    //    printf("%s\n", buf);
+    //}
 
     printf("\n:ok:\n");
     return 0;
 }
-#endif
 
