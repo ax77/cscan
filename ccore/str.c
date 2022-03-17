@@ -1,5 +1,7 @@
 #include "str.h"
 #include "xmem.h"
+#include "ascii.h"
+#include "vec.h"
 
 int strstarts(char *what, char *with)
 {
@@ -279,8 +281,8 @@ Str * sb_replace(Str * input, char * pattern, char *replacement)
     Str * sb = sb_new();
 
     for (size_t offset = 0; offset < input_len;) {
-        size_t endIndex = pattern_len + offset;
-        if (next_is(input, pattern, input_len, offset, endIndex, pattern_len)) {
+        size_t end_index = pattern_len + offset;
+        if (next_is(input, pattern, input_len, offset, end_index, pattern_len)) {
             if (repl_len > 0) {
                 sb_adds(sb, replacement);
             }
@@ -310,3 +312,137 @@ int sb_peekc(Str *buf)
     }
     return buf->str[buf->offset];
 }
+
+Str *normalize_slashes(char *s)
+{
+    Str *sb = sb_new();
+    size_t len = strlen(s);
+
+    char p = '\0';
+    for (size_t i = 0; i < len && s[i]; i++) {
+        char c = s[i];
+        if (c == '\\' || c == '/') {
+            if (p == '\\' || p == '/') {
+                p = c;
+                continue;
+            }
+            if (c == '\\') {
+                p = c;
+                sb_addc(sb, '/');
+                continue;
+            }
+        }
+        sb_addc(sb, c);
+        p = c;
+    }
+
+    return sb;
+}
+
+int is_abs_win(char *s)
+{
+    assert(s);
+    if (strlen(s) >= 3) {
+        return is_letter(s[0]) && s[1] == ':' && (s[2] == '\\' || s[2] == '/');
+    }
+    return 0;
+}
+
+int is_abs_unix(char *s)
+{
+    assert(s);
+    return strlen(s) >= 1 && s[0] == '/';
+}
+
+int is_abs_path(char *s)
+{
+    assert(s);
+    return is_abs_win(s) || is_abs_unix(s);
+}
+
+// public static String normalize(final String given) {
+//    final String tmp = normalizeSlashes(given);
+//    final List<String> splitten = strSplitChar(tmp, '/', true);
+//
+//    List<String> worklist = new ArrayList<String>();
+//    if (isAbsoluteUnix(tmp)) {
+//      worklist.add("/");
+//    }
+//
+//    for (int i = 0; i < splitten.size(); i++) {
+//      String part = splitten.get(i).trim();
+//
+//      if (part.isEmpty()) {
+//        continue;
+//      }
+//      if (part.equals(".")) { // ./
+//        continue;
+//      }
+//
+//      if (part.equals("..")) { // ../
+//        if (!worklist.isEmpty()) {
+//          final int lastIndex = worklist.size() - 1;
+//          String last = worklist.get(lastIndex);
+//          if (!isAbsolutePath(last)) {
+//            worklist.remove(lastIndex);
+//            continue;
+//          }
+//        }
+//      }
+//
+//      if (i < splitten.size() - 1) {
+//        part += "/";
+//      }
+//      worklist.add(part);
+//    }
+//
+//    StringBuilder sb = new StringBuilder();
+//    for (String s : worklist) {
+//      sb.append(s);
+//    }
+//    return sb.toString();
+// }
+
+char *normalize(char *given)
+{
+    Str * tmp = normalize_slashes(given);
+    vec * splitten = sb_split_char(tmp, '/', 1);
+
+    vec * worklist = vec_new();
+    if (is_abs_unix(tmp->str)) {
+        vec_push(worklist, cc_strdup("/"));
+    }
+
+    for (size_t i = 0; i < splitten->size; i++) {
+        Str *part = sb_news(vec_get(splitten, i));
+        part = sb_trim(part);
+        if (part->len == 0) {
+            continue;
+        }
+        if (part->len == 1 && part->str[0] == '.') {
+            continue;
+        }
+        if (strequal(part->str, "..")) {
+            if (worklist->size != 0) {
+                size_t lastidx = worklist->size - 1;
+                char *last = vec_get(worklist, lastidx);
+                if (!is_abs_path(last)) {
+                    vec_pop(worklist);
+                    continue;
+                }
+            }
+        }
+        if (i < (splitten->size - 1)) {
+            sb_addc(part, '/');
+        }
+        vec_push(worklist, cc_strdup(part->str));
+    }
+
+    Str * sb = sb_new();
+    for (size_t i = 0; i < worklist->size; i++) {
+        char *s = vec_get(worklist, i);
+        sb_adds(sb, s);
+    }
+    return sb->str;
+}
+

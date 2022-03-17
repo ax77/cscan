@@ -384,11 +384,42 @@ void test_replace_0()
     assert_true(streq(sb_replace(where, olds, news)->str, ".diance"));
 }
 
-void test_fread()
+static void assertEquals(char *s1, char *s2)
 {
-//    size_t s = 0;
-//    char *txt = hb_readfile("main.c", &s);
-//    assert(txt);
+    assert_true(strequal(s1, s2));
+}
+
+void test_normalize()
+{
+    assertEquals("c:/project/test/header.h", normalize("c:/project//test/./././././././header.h"));
+    assertEquals("project/header.h", normalize("./project/test/../header.h"));
+    assertEquals("C:/header.h", normalize("C:/project/test/../../../../header.h"));
+    assertEquals("../header.h", normalize("../project/test/../../header.h"));
+    assertEquals("C:/header.h", normalize("C:/project/../header.h"));
+    assertEquals("/usr/header.h", normalize("/usr/include/../header.h"));
+
+    assertEquals("../header.h", normalize("././././../header.h"));
+    assertEquals("C:/header.h", normalize("C:\\../../../../../../header.h"));
+
+    assertEquals("header.h", normalize("./header.h"));
+    assertEquals("header.h", normalize("header.h"));
+
+    assertEquals("header.h", normalize(".\\//\\//\\//\\//header.h"));
+    assertEquals("src/header.h", normalize("src//\\./././header.h"));
+
+    assertEquals("D:/p2/core/cache/binary", normalize("D:\\..\\..\\.\\p2\\core\\cache\\binary"));
+    assertEquals("C:/file.c", normalize("C:\\file.c"));
+    assertEquals("C:/file.c", normalize("C://file.c"));
+    assertEquals("C:/file.c", normalize("C:/file.c"));
+
+    assertEquals("C:/testing.txt", normalize("C:\\temp\\test\\..\\..\\testing.txt"));
+    assertEquals("C:/more/testing/test.txt",
+            normalize("C:\\temp\\test\\..\\../testing\\..\\more/testing\\test.txt"));
+
+    assertEquals("/usr/local/include/stdio.h", normalize("/usr/local//include//\\stdio.h"));
+    assertEquals("", normalize("./"));
+    assertEquals("/", normalize("/"));
+    assertEquals("../", normalize("../"));
 }
 
 int main(void)
@@ -437,7 +468,7 @@ int main(void)
     list_test5();
     list_test6();
 
-    test_fread();
+    test_normalize();
 
     //char buf[64];
     //for (int i = 0; i < 10; i += 1) {

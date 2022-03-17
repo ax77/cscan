@@ -39,4 +39,10 @@ static int strequal(void *a, void *b)
     return strcmp(str_1, str_2) == 0;
 }
 
+char *normalize(char *given);
+Str *normalize_slashes(char *s);
+int is_abs_win(char *s);
+int is_abs_unix(char *s);
+int is_abs_path(char *s);
+
 #endif /* STR_H_ */
