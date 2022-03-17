@@ -8,8 +8,6 @@ CharBuf* charbuf_new(char *from)
     assert(from);
 
     CharBuf *r = cc_malloc(sizeof(CharBuf));
-
-    char *source = cc_strdup(from);
     size_t buflen = strlen(from);
 
     // +32 : some little padding, when we check the buffer like this: buffer[index + 2].
@@ -23,12 +21,12 @@ CharBuf* charbuf_new(char *from)
     // Ignore the BOM, if any.
     size_t offset = 0;
     if (buflen > 3) {
-        if (source[0] == 0xef && source[1] == 0xbb && source[2] == 0xbf) {
+        if (from[0] == 0xef && from[1] == 0xbb && from[2] == 0xbf) {
             offset = 3;
         }
     }
-    for (size_t i = offset; i < buflen && source[i]; i++) {
-        r->buf[i] = source[i];
+    for (size_t i = offset, j = 0; i < buflen && from[i]; i++, j++) {
+        r->buf[j] = from[i];
     }
 
     r->size = buflen;
@@ -49,7 +47,7 @@ int nextc(CharBuf *b)
     for (;;) {
 
         if (b->eofs >= (BUFFER_PADDING - 8)) {
-            // cc_fatal("Infinite loop handling...");
+             cc_fatal("Infinite loop handling...");
         }
 
         if (b->offset >= b->size) {

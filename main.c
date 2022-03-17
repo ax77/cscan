@@ -134,42 +134,42 @@ void test_buf_3()
     }
 }
 
-//void test_strmid_again()
-//{
-//    assert_true(streq(sb_mid(sb_news("3f420a10-5465-"), 4, 9)->str, "0a10-5465"));
-//    assert_true(streq(sb_mid(sb_news("f8535dba-8cfa-"), 5, 9)->str, "dba-8cfa-"));
-//    assert_true(streq(sb_mid(sb_news("0b9edb1c-b2bb-"), 0, 6)->str, "0b9edb"));
-//    assert_true(streq(sb_mid(sb_news("f34285f2-5ffb-"), 3, 14)->str, "285f2-5ffb-"));
-//    assert_true(streq(sb_mid(sb_news("bff4aa0f-2727-"), 6, 11)->str, "0f-2727-"));
-//    assert_true(streq(sb_mid(sb_news("209a689c-527c-"), 10, 6)->str, "27c-"));
-//    assert_true(streq(sb_mid(sb_news("269da2ec-c7df-"), 0, 7)->str, "269da2e"));
-//    assert_true(streq(sb_mid(sb_news("22e0b7cb-21ec-"), 5, 4)->str, "7cb-"));
-//    assert_true(streq(sb_mid(sb_news("ad2b4db3-d89e-"), 6, 1)->str, "b"));
-//    assert_true(streq(sb_mid(sb_news("3833781d-b109-"), 3, 14)->str, "3781d-b109-"));
-//    assert_true(streq(sb_mid(sb_news("8e132b56-3832-"), 10, 9)->str, "832-"));
-//    assert_true(streq(sb_mid(sb_news("163e950d-3908-"), 7, 11)->str, "d-3908-"));
-//    assert_true(streq(sb_mid(sb_news("1d5f3c7b-ab4d-"), 7, 13)->str, "b-ab4d-"));
-//    assert_true(streq(sb_mid(sb_news("9e0a1634-9632-"), 0, 8)->str, "9e0a1634"));
-//    assert_true(streq(sb_mid(sb_news("7508749d-eabc-"), 11, 4)->str, "bc-"));
-//    assert_true(streq(sb_mid(sb_news("6c0e523b-1272-"), 9, 7)->str, "1272-"));
-//    assert_true(streq(sb_mid(sb_news("15635e34-69ac-"), 1, 10)->str, "5635e34-69"));
-//    assert_true(streq(sb_mid(sb_news("8f41d3d7-b717-"), 8, 7)->str, "-b717-"));
-//    assert_true(streq(sb_mid(sb_news("bf84b542-ba2b-"), 0, 11)->str, "bf84b542-ba"));
-//    assert_true(streq(sb_mid(sb_news("58ae2e21-4d2d-"), 12, 3)->str, "d-"));
-//    assert_true(streq(sb_mid(sb_news("fd255310-91d4-"), 4, 7)->str, "5310-91"));
-//    assert_true(streq(sb_mid(sb_news("ea840d0e-19de-"), 12, 8)->str, "e-"));
-//    assert_true(streq(sb_mid(sb_news("e5306b54-665d-"), 4, 6)->str, "6b54-6"));
-//    assert_true(streq(sb_mid(sb_news("7befdd16-cd27-"), 13, 3)->str, "-"));
-//    assert_true(streq(sb_mid(sb_news("de808b5f-9ebe-"), 0, 0)->str, ""));
-//    assert_true(streq(sb_mid(sb_news("34ecbaff-25a5-"), 2, 2)->str, "ec"));
-//    assert_true(streq(sb_mid(sb_news("4be184fd-573f-"), 0, 8)->str, "4be184fd"));
-//    assert_true(streq(sb_mid(sb_news("ffcf774c-e3c5-"), 0, 3)->str, "ffc"));
-//    assert_true(streq(sb_mid(sb_news("bf06c07c-240f-"), 4, 11)->str, "c07c-240f-"));
-//    assert_true(streq(sb_mid(sb_news("d4362892-993d-"), 13, 14)->str, "-"));
-//    assert_true(streq(sb_mid(sb_news("fc36edf4-647c-"), 6, 1)->str, "f"));
-//    assert_true(streq(sb_mid(sb_news("d39f9cbe-d1a0-"), 4, 3)->str, "9cb"));
-//    assert_true(streq(sb_mid(sb_news("56ed5dc4-d6cc-"), 9, 13)->str, "d6cc-"));
-//}
+void test_strmid_again()
+{
+    assert_true(streq(sb_mid(("3f420a10-5465-"), 4, 9), "0a10-5465"));
+    assert_true(streq(sb_mid(("f8535dba-8cfa-"), 5, 9), "dba-8cfa-"));
+    assert_true(streq(sb_mid(("0b9edb1c-b2bb-"), 0, 6), "0b9edb"));
+    assert_true(streq(sb_mid(("f34285f2-5ffb-"), 3, 14), "285f2-5ffb-"));
+    assert_true(streq(sb_mid(("bff4aa0f-2727-"), 6, 11), "0f-2727-"));
+    assert_true(streq(sb_mid(("209a689c-527c-"), 10, 6), "27c-"));
+    assert_true(streq(sb_mid(("269da2ec-c7df-"), 0, 7), "269da2e"));
+    assert_true(streq(sb_mid(("22e0b7cb-21ec-"), 5, 4), "7cb-"));
+    assert_true(streq(sb_mid(("ad2b4db3-d89e-"), 6, 1), "b"));
+    assert_true(streq(sb_mid(("3833781d-b109-"), 3, 14), "3781d-b109-"));
+    assert_true(streq(sb_mid(("8e132b56-3832-"), 10, 9), "832-"));
+    assert_true(streq(sb_mid(("163e950d-3908-"), 7, 11), "d-3908-"));
+    assert_true(streq(sb_mid(("1d5f3c7b-ab4d-"), 7, 13), "b-ab4d-"));
+    assert_true(streq(sb_mid(("9e0a1634-9632-"), 0, 8), "9e0a1634"));
+    assert_true(streq(sb_mid(("7508749d-eabc-"), 11, 4), "bc-"));
+    assert_true(streq(sb_mid(("6c0e523b-1272-"), 9, 7), "1272-"));
+    assert_true(streq(sb_mid(("15635e34-69ac-"), 1, 10), "5635e34-69"));
+    assert_true(streq(sb_mid(("8f41d3d7-b717-"), 8, 7), "-b717-"));
+    assert_true(streq(sb_mid(("bf84b542-ba2b-"), 0, 11), "bf84b542-ba"));
+    assert_true(streq(sb_mid(("58ae2e21-4d2d-"), 12, 3), "d-"));
+    assert_true(streq(sb_mid(("fd255310-91d4-"), 4, 7), "5310-91"));
+    assert_true(streq(sb_mid(("ea840d0e-19de-"), 12, 8), "e-"));
+    assert_true(streq(sb_mid(("e5306b54-665d-"), 4, 6), "6b54-6"));
+    assert_true(streq(sb_mid(("7befdd16-cd27-"), 13, 3), "-"));
+    assert_true(streq(sb_mid(("de808b5f-9ebe-"), 0, 0), ""));
+    assert_true(streq(sb_mid(("34ecbaff-25a5-"), 2, 2), "ec"));
+    assert_true(streq(sb_mid(("4be184fd-573f-"), 0, 8), "4be184fd"));
+    assert_true(streq(sb_mid(("ffcf774c-e3c5-"), 0, 3), "ffc"));
+    assert_true(streq(sb_mid(("bf06c07c-240f-"), 4, 11), "c07c-240f-"));
+    assert_true(streq(sb_mid(("d4362892-993d-"), 13, 14), "-"));
+    assert_true(streq(sb_mid(("fc36edf4-647c-"), 6, 1), "f"));
+    assert_true(streq(sb_mid(("d39f9cbe-d1a0-"), 4, 3), "9cb"));
+    assert_true(streq(sb_mid(("56ed5dc4-d6cc-"), 9, 13), "d6cc-"));
+}
 
 struct token_simple {
     char *value;
@@ -291,10 +291,13 @@ void test_str_pop()
     Str sb = STR_INIT;
     char *input = "1234567";
     sb_adds_rev(&sb, input);
+}
 
-    while (sb.len) {
-        printf("%c ", sb_pop(&sb));
-    }
+void test_charbuf() {
+    CharBuf *b = charbuf_new("a\\\nb");
+    assert_true('a' == nextc(b));
+    assert_true('b' == nextc(b));
+    assert_true(-1 == nextc(b));
 }
 
 int main(void)
@@ -323,8 +326,9 @@ int main(void)
     list_test5();
     list_test6();
     test_normalize();
-
     test_str_pop();
+    test_charbuf();
+    test_strmid_again();
 
     printf("\n:ok:\n");
     return 0;
