@@ -14,6 +14,7 @@
 #include "ccore/list.h"
 #include "ccore/uuid4.h"
 #include "ccore/fdesc.h"
+#include "ccore/eval.h"
 
 void test_strstarts_1()
 {
@@ -300,6 +301,23 @@ void test_charbuf() {
     assert_true(-1 == nextc(b));
 }
 
+void test_eval() {
+    assert_true(1024 == evdecimal("010000000000", 2));
+    assert_true(1024 == evdecimal("2000", 8));
+    assert_true(1024 == evdecimal("1024", 10));
+    assert_true(1024 == evdecimal("400", 16));
+
+    // input = "0x1.cd05bc61f9e57p+18";
+    // assert(dbl_cmp(472086.94347999006, 0x1.cd05bc61f9e57p+18, 0.0001f));
+    // assert(dbl_cmp(parse_again(input)->f64, strtod(input, &endptr), 0.0001f));
+    // input = "4.720869e+05";
+    // assert(dbl_cmp(472086.94347999006, 4.720869e+05, 0.1f));
+    // assert(dbl_cmp(parse_again(input)->f64, strtod(input, &endptr), 0.0001f));
+
+    //printf("%f\n", evalhexfloat("1", "cd05bc61f9e57", "18", '+'));
+    //printf("%f\n", evaldecfloat("472086", "94347999006", "", '+'));
+}
+
 int main(void)
 {
     test_buf_0();
@@ -329,6 +347,7 @@ int main(void)
     test_str_pop();
     test_charbuf();
     test_strmid_again();
+    test_eval();
 
     printf("\n:ok:\n");
     return 0;

@@ -33,7 +33,7 @@ int hb_read_byte(int fd)
 {
     assert(fd > 0);
 
-    char ret = '\0';
+    int ret = '\0';
     ptrdiff_t nread = read(fd, &ret, 1u);
 
     // EOF
