@@ -285,6 +285,18 @@ void test_normalize()
     assertEquals("../", normalize("../"));
 }
 
+
+void test_str_pop()
+{
+    Str sb = STR_INIT;
+    char *input = "1234567";
+    sb_adds_rev(&sb, input);
+
+    while (sb.len) {
+        printf("%c ", sb_pop(&sb));
+    }
+}
+
 int main(void)
 {
     test_buf_0();
@@ -311,6 +323,8 @@ int main(void)
     list_test5();
     list_test6();
     test_normalize();
+
+    test_str_pop();
 
     printf("\n:ok:\n");
     return 0;

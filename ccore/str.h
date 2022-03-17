@@ -36,5 +36,8 @@ int strequal(void *a, void *b);
 int sb_nextc(Str *buf);
 int sb_peekc(Str *buf);
 
+int sb_pop(Str *buf);
+int sb_adds_rev(Str *buf, char *input);
+
 #endif /* STR_H_ */
 

@@ -455,3 +455,32 @@ int sb_peekc(Str *buf)
     return buf->buf[buf->offset];
 }
 
+int sb_pop(Str *buf)
+{
+    assert(buf);
+    assert(buf->len);
+    char c = buf->buf[buf->len - 1];
+    buf->len--;
+    buf->buf[buf->len] = '\0';
+    return c;
+}
+
+int sb_adds_rev(Str *buf, char *input)
+{
+    assert(buf);
+    assert(input);
+
+    const size_t len = strlen(input);
+    if (len == 0) {
+        return 0;
+    }
+
+    const ptrdiff_t last = len - 1;
+    ptrdiff_t n = 0;
+    for (ptrdiff_t i = last; i >= 0 && input[i]; i--, n++) {
+        sb_addc(buf, input[i]);
+    }
+
+    return n;
+}
+
