@@ -355,6 +355,14 @@ int strequal(void *a, void *b)
     return strcmp(str_1, str_2) == 0;
 }
 
+static char *content(Str *sb)
+{
+    if (sb->len == 0) {
+        return cc_strdup("");
+    }
+    return sb->buf;
+}
+
 vec * sb_split_char(char * where, char sep, int include_empty)
 {
     assert(where);
@@ -371,7 +379,7 @@ vec * sb_split_char(char * where, char sep, int include_empty)
         char c = where[i];
         if (c == sep) {
             if (sb.len > 0 || (sb.len == 0 && include_empty)) {
-                vec_push(lines, sb.buf);
+                vec_push(lines, content(&sb));
             }
             sb_reset(&sb);
             continue;
@@ -380,7 +388,7 @@ vec * sb_split_char(char * where, char sep, int include_empty)
     }
 
     if (sb.len > 0 || (sb.len == 0 && include_empty)) {
-        vec_push(lines, sb.buf);
+        vec_push(lines, content(&sb));
     }
     return lines;
 }
