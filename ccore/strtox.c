@@ -120,14 +120,6 @@ static char cut_mnt_exp(Str *buffer, Str *mnt, Str *exp, unsigned mnt_base)
     return exp_sign;
 }
 
-static int evaltype_by_mnt_exp(Str *mnt, Str *exp)
-{
-    if (mnt->len || exp->len) {
-        return EVALTYPE_FLOATING;
-    }
-    return EVALTYPE_INTEGER;
-}
-
 Strtox *parse_number(char *n)
 {
     assert(n);
@@ -156,17 +148,32 @@ Strtox *parse_number(char *n)
 
     // NOTE: we're dealing with reversed string
     if (input.len > 2) {
-        // 0x12 : 21x0
+        // 0x12 -> 21x0
         char c1 = sb_char_at(&input, input.len - 1); // 0
         char c2 = sb_char_at(&input, input.len - 2); // x
         if (c1 == '0' && (c2 == 'b' || c2 == 'B')) {
+            evaltype = INTEGER_2;
             isBin = 1;
         }
-        if ((c1 == '0' && (c2 == 'o' || c2 == 'O')) || (c1 == '0' && is_oct(c2))) {
+        // rust-like normal octal prefix
+        if (c1 == '0' && (c2 == 'o' || c2 == 'O')) {
+            evaltype = INTEGER_8;
             isOct = 1;
         }
         if (c1 == '0' && (c2 == 'x' || c2 == 'X')) {
+            evaltype = INTEGER_16;
             isHex = 1;
+        }
+    }
+
+    // a corner cases for c-like octals
+    if (input.len >= 2) {
+        // 07 -> 70
+        char c1 = sb_char_at(&input, input.len - 1); // 0
+        char c2 = sb_char_at(&input, input.len - 2); // 7
+        if (c1 == '0' && is_oct(c2)) {
+            evaltype = INTEGER_8;
+            isOct = 1;
         }
     }
 
@@ -195,16 +202,23 @@ Strtox *parse_number(char *n)
         if (isHex) {
             cut_for_base(&input, &dec, 16);
             exp_sign = cut_mnt_exp(&input, &mnt, &exp, 16);
-            evaltype = evaltype_by_mnt_exp(&mnt, &exp);
+            if (mnt.len || exp.len) {
+                evaltype = FLOATING_16;
+            }
         }
 
     }
 
     else {
 
+        evaltype = INTEGER_10;
+
+        // c-like floating constant in a form '.77f'
         if (sb_peek_last(&input) == '.') {
             exp_sign = cut_mnt_exp(&input, &mnt, &exp, 10);
-            evaltype = evaltype_by_mnt_exp(&mnt, &exp);
+            if (mnt.len || exp.len) {
+                evaltype = FLOATING_10;
+            }
         }
 
         else {
@@ -217,7 +231,9 @@ Strtox *parse_number(char *n)
 
             cut_for_base(&input, &dec, 10);
             exp_sign = cut_mnt_exp(&input, &mnt, &exp, 10);
-            evaltype = evaltype_by_mnt_exp(&mnt, &exp);
+            if (mnt.len || exp.len) {
+                evaltype = FLOATING_10;
+            }
         }
 
     }
@@ -226,21 +242,9 @@ Strtox *parse_number(char *n)
         sb_addc(&suf, sb_pop(&input));
     }
 
-    int evalbase = EVALBASE_ERROR;
-    if (isBin) {
-        evalbase = EVALBASE_2;
-    } else if (isOct) {
-        evalbase = EVALBASE_8;
-    } else if (isHex) {
-        evalbase = EVALBASE_16;
-    } else {
-        evalbase = EVALBASE_10;
-    }
+    Strtox *result = cc_malloc(sizeof(struct strtox));
 
     assert(evaltype != EVALTYPE_ERROR);
-
-    Strtox *result = cc_malloc(sizeof(struct strtox));
-    result->evalbase = evalbase;
     result->evaltype = evaltype;
 
     result->main_sign = main_sign;

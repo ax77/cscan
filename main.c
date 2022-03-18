@@ -310,15 +310,69 @@ void test_eval()
     assert_true(1024 == evdecimal("400", 16));
 
     Strtox *data = parse_number("0x1.cd05bc61f9e57p+18");
-    assert_true(EVALBASE_16 == data->evalbase);
-    assert_true(EVALTYPE_FLOATING == data->evaltype);
-
+    assert_true(FLOATING_16 == data->evaltype);
     assert_true('+' == data->main_sign);
     assert_true(strequal("1", data->dec));
     assert_true(strequal("cd05bc61f9e57", data->mnt));
     assert_true(strequal("18", data->exp));
     assert_true('+' == data->exp_sign);
     assert_true(strequal("", data->suf));
+
+    data = parse_number("0x0");
+    assert_true(INTEGER_16 == data->evaltype);
+    assert_true(strequal("0", data->dec));
+    assert_true(strequal("", data->mnt));
+    assert_true(strequal("", data->exp));
+    assert_true(strequal("", data->suf));
+
+    data = parse_number("0");
+    assert_true(INTEGER_10 == data->evaltype);
+    assert_true(strequal("0", data->dec));
+    assert_true(strequal("", data->mnt));
+    assert_true(strequal("", data->exp));
+    assert_true(strequal("", data->suf));
+
+    data = parse_number("01");
+    assert_true(INTEGER_8 == data->evaltype);
+    assert_true(strequal("1", data->dec));
+    assert_true(strequal("", data->mnt));
+    assert_true(strequal("", data->exp));
+    assert_true(strequal("", data->suf));
+
+    data = parse_number("0b0");
+    assert_true(INTEGER_2 == data->evaltype);
+    assert_true(strequal("0", data->dec));
+    assert_true(strequal("", data->mnt));
+    assert_true(strequal("", data->exp));
+    assert_true(strequal("", data->suf));
+
+    data = parse_number("3.14");
+    assert_true(FLOATING_10 == data->evaltype);
+    assert_true(strequal("3", data->dec));
+    assert_true(strequal("14", data->mnt));
+    assert_true(strequal("", data->exp));
+    assert_true(strequal("", data->suf));
+
+    data = parse_number(".14");
+    assert_true(FLOATING_10 == data->evaltype);
+    assert_true(strequal("", data->dec));
+    assert_true(strequal("14", data->mnt));
+    assert_true(strequal("", data->exp));
+    assert_true(strequal("", data->suf));
+
+    data = parse_number("3.830124e+05");
+    assert_true(FLOATING_10 == data->evaltype);
+    assert_true(strequal("3", data->dec));
+    assert_true(strequal("830124", data->mnt));
+    assert_true(strequal("05", data->exp));
+    assert_true(strequal("", data->suf));
+
+    data = parse_number("383012.4228341295965947L");
+    assert_true(FLOATING_10 == data->evaltype);
+    assert_true(strequal("383012", data->dec));
+    assert_true(strequal("4228341295965947", data->mnt));
+    assert_true(strequal("", data->exp));
+    assert_true(strequal("L", data->suf));
 }
 
 int main(void)
