@@ -21,15 +21,14 @@
 typedef struct strtox Strtox;
 struct strtox {
 
-    // correct:
-    // FLOATING+B10, FLOATING+B16
-    // INTEGER+B2, INTEGER+B8, INTEGER+B10, INTEGER+B16
-
-    // 0x1.c0f8663623b19p+14
-    // evaltype = FLOATING
-    // evalbase = B16
     enum {
-        EVALTYPE_ERROR = -1, FLOATING_10, FLOATING_16, INTEGER_2, INTEGER_8, INTEGER_10, INTEGER_16
+        EVALTYPE_ERROR = -1,
+        FLOATING_10 = 0,
+        FLOATING_16 = 1,
+        INTEGER_2 = 2,
+        INTEGER_8 = 8,
+        INTEGER_10 = 10,
+        INTEGER_16 = 16
     } evaltype;
 
     // We keep the whole parsed data only because

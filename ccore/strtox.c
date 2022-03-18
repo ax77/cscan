@@ -2,26 +2,9 @@
 #include "str.h"
 #include "ascii.h"
 #include "strtox.h"
+#include "eval.h"
 
-//  private static void cutForBase(LinkedList<Character> buffer, StringBuilder out, int base) {
-//
-//    final boolean baseIsCorrect = base == 2 || base == 8 || base == 10 || base == 16;
-//    if (!baseIsCorrect) {
-//      throw new RuntimeException("it is not a correct base: " + base);
-//    }
-//
-//    for (; !buffer.isEmpty();) {
-//      final Character peek = buffer.peekFirst();
-//      final boolean needBreak = (base == 2 && !isBin(peek)) || (base == 8 && !isOct(peek))
-//          || (base == 10 && !isDec(peek)) || (base == 16 && !isHex(peek));
-//      if (needBreak) {
-//        break;
-//      }
-//
-//      char c = buffer.removeFirst();
-//      out.append(c);
-//    }
-//  }
+static int evaluate(Strtox *);
 
 static void cut_for_base(Str *buffer, Str *out, unsigned base)
 {
@@ -45,39 +28,6 @@ static void cut_for_base(Str *buffer, Str *out, unsigned base)
         sb_addc(out, c);
     }
 }
-
-//  private static char cutMntExp(LinkedList<Character> buffer, StringBuilder mnt, StringBuilder exp, int mntBase) {
-//
-//    final boolean baseIsCorrect = mntBase == 10 || mntBase == 16;
-//    if (!baseIsCorrect) {
-//      throw new RuntimeException("it is not a correct base for a mantissa: " + mntBase);
-//    }
-//
-//    char exp_sign = '+';
-//    if (!buffer.isEmpty() && buffer.peekFirst() == '.') {
-//      buffer.removeFirst();
-//      cutForBase(buffer, mnt, mntBase);
-//    }
-//
-//    if (!buffer.isEmpty()) {
-//
-//      final boolean isHexExp = buffer.peekFirst() == 'p' || buffer.peekFirst() == 'P';
-//      final boolean isDecExp = buffer.peekFirst() == 'e' || buffer.peekFirst() == 'E';
-//
-//      if (isHexExp && mntBase != 16) {
-//        throw new RuntimeException("a hex exponent part in a floating constant.");
-//      }
-//
-//      if (isHexExp || isDecExp) {
-//        buffer.removeFirst();
-//        if (buffer.peekFirst() == '-' || buffer.peekFirst() == '+') {
-//          exp_sign = buffer.removeFirst();
-//        }
-//        cutForBase(buffer, exp, 10);
-//      }
-//    }
-//    return exp_sign;
-//  }
 
 static char cut_mnt_exp(Str *buffer, Str *mnt, Str *exp, unsigned mnt_base)
 {
@@ -253,5 +203,27 @@ Strtox *parse_number(char *n)
     result->exp = sb_buf_or_empty(&exp);
     result->exp_sign = exp_sign;
     result->suf = sb_buf_or_empty(&suf);
+
+    evaluate(result);
     return result;
 }
+
+static int evaluate(Strtox *n)
+{
+    if (n->evaltype == FLOATING_10 || n->evaltype == FLOATING_16) {
+        if (n->evaltype == FLOATING_10) {
+            double d = evaldecfloat(n->dec, n->mnt, n->exp, n->exp_sign);
+            n->f64 = d;
+        } else {
+            double d = evalhexfloat(n->dec, n->mnt, n->exp, n->exp_sign);
+            n->f64 = d;
+        }
+        return 0;
+    }
+
+    assert(n->evaltype == 2 || n->evaltype == 8 || n->evaltype == 10 || n->evaltype == 16);
+    n->u64 = evdecimal(n->dec, n->evaltype);
+
+    return 1;
+}
+

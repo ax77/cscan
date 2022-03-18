@@ -1,13 +1,13 @@
 #include "ascii.h"
 #include "hdrs.h"
 
-long evdecimal(char *dec, unsigned base) {
+size_t evdecimal(char *dec, unsigned base) {
     assert(dec);
 
     size_t len = strlen(dec);
     assert(len);
 
-    long retval = 0;
+    size_t retval = 0;
 
     for (size_t i = 0; i < len; i++) {
         int c = dec[i];
