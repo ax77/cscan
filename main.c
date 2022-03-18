@@ -287,7 +287,6 @@ void test_normalize()
     assertEquals("../", normalize("../"));
 }
 
-
 void test_str_pop()
 {
     Str sb = STR_INIT;
@@ -295,31 +294,31 @@ void test_str_pop()
     sb_adds_rev(&sb, input);
 }
 
-void test_charbuf() {
+void test_charbuf()
+{
     CharBuf *b = charbuf_new("a\\\nb");
     assert_true('a' == nextc(b));
     assert_true('b' == nextc(b));
     assert_true(-1 == nextc(b));
 }
 
-void test_eval() {
+void test_eval()
+{
     assert_true(1024 == evdecimal("010000000000", 2));
     assert_true(1024 == evdecimal("2000", 8));
     assert_true(1024 == evdecimal("1024", 10));
     assert_true(1024 == evdecimal("400", 16));
 
-    // input = "0x1.cd05bc61f9e57p+18";
-    // assert(dbl_cmp(472086.94347999006, 0x1.cd05bc61f9e57p+18, 0.0001f));
-    // assert(dbl_cmp(parse_again(input)->f64, strtod(input, &endptr), 0.0001f));
-    // input = "4.720869e+05";
-    // assert(dbl_cmp(472086.94347999006, 4.720869e+05, 0.1f));
-    // assert(dbl_cmp(parse_again(input)->f64, strtod(input, &endptr), 0.0001f));
-
-    //printf("%f\n", evalhexfloat("1", "cd05bc61f9e57", "18", '+'));
-    //printf("%f\n", evaldecfloat("472086", "94347999006", "", '+'));
-
     Strtox *data = parse_number("0x1.cd05bc61f9e57p+18");
-    printf("%s\n", data->dec);
+    assert_true(EVALBASE_16 == data->evalbase);
+    assert_true(EVALTYPE_FLOATING == data->evaltype);
+
+    assert_true('+' == data->main_sign);
+    assert_true(strequal("1", data->dec));
+    assert_true(strequal("cd05bc61f9e57", data->mnt));
+    assert_true(strequal("18", data->exp));
+    assert_true('+' == data->exp_sign);
+    assert_true(strequal("", data->suf));
 }
 
 int main(void)

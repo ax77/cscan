@@ -120,6 +120,14 @@ static char cut_mnt_exp(Str *buffer, Str *mnt, Str *exp, unsigned mnt_base)
     return exp_sign;
 }
 
+static int evaltype_by_mnt_exp(Str *mnt, Str *exp)
+{
+    if (mnt->len || exp->len) {
+        return EVALTYPE_FLOATING;
+    }
+    return EVALTYPE_INTEGER;
+}
+
 Strtox *parse_number(char *n)
 {
     assert(n);
@@ -140,22 +148,25 @@ Strtox *parse_number(char *n)
     }
 
     char exp_sign = '+';
-    int isBin = false;
-    int isOct = false;
-    int isHex = false;
+    int isBin = 0;
+    int isOct = 0;
+    int isHex = 0;
+
+    int evaltype = EVALTYPE_ERROR;
 
     // NOTE: we're dealing with reversed string
     if (input.len > 2) {
-        char c1 = sb_char_at(&input, input.len - 1);
-        char c2 = sb_char_at(&input, input.len - 2);
+        // 0x12 : 21x0
+        char c1 = sb_char_at(&input, input.len - 1); // 0
+        char c2 = sb_char_at(&input, input.len - 2); // x
         if (c1 == '0' && (c2 == 'b' || c2 == 'B')) {
-            isBin = true;
+            isBin = 1;
         }
         if ((c1 == '0' && (c2 == 'o' || c2 == 'O')) || (c1 == '0' && is_oct(c2))) {
-            isOct = true;
+            isOct = 1;
         }
         if (c1 == '0' && (c2 == 'x' || c2 == 'X')) {
-            isHex = true;
+            isHex = 1;
         }
     }
 
@@ -184,6 +195,7 @@ Strtox *parse_number(char *n)
         if (isHex) {
             cut_for_base(&input, &dec, 16);
             exp_sign = cut_mnt_exp(&input, &mnt, &exp, 16);
+            evaltype = evaltype_by_mnt_exp(&mnt, &exp);
         }
 
     }
@@ -192,6 +204,7 @@ Strtox *parse_number(char *n)
 
         if (sb_peek_last(&input) == '.') {
             exp_sign = cut_mnt_exp(&input, &mnt, &exp, 10);
+            evaltype = evaltype_by_mnt_exp(&mnt, &exp);
         }
 
         else {
@@ -204,6 +217,7 @@ Strtox *parse_number(char *n)
 
             cut_for_base(&input, &dec, 10);
             exp_sign = cut_mnt_exp(&input, &mnt, &exp, 10);
+            evaltype = evaltype_by_mnt_exp(&mnt, &exp);
         }
 
     }
@@ -212,9 +226,22 @@ Strtox *parse_number(char *n)
         sb_addc(&suf, sb_pop(&input));
     }
 
+    int evalbase = EVALBASE_ERROR;
+    if (isBin) {
+        evalbase = EVALBASE_2;
+    } else if (isOct) {
+        evalbase = EVALBASE_8;
+    } else if (isHex) {
+        evalbase = EVALBASE_16;
+    } else {
+        evalbase = EVALBASE_10;
+    }
+
+    assert(evaltype != EVALTYPE_ERROR);
+
     Strtox *result = cc_malloc(sizeof(struct strtox));
-    result->evalbase = EVALBASE_ERROR;
-    result->evaltype = EVALTYPE_ERROR;
+    result->evalbase = evalbase;
+    result->evaltype = evaltype;
 
     result->main_sign = main_sign;
     result->dec = sb_buf_or_empty(&dec);
@@ -224,112 +251,3 @@ Strtox *parse_number(char *n)
     result->suf = sb_buf_or_empty(&suf);
     return result;
 }
-
-//
-//  public static IntLiteral parse(String input) {
-//
-//    if (input == null || input.trim().length() == 0) {
-//      throw new RuntimeException("An empty input.");
-//    }
-//
-//    // slight underscores support
-//    // we do not check whether the underscore is between two digits or it isn't.
-//    // we may just ignore them all.
-//    //
-//    final String originalInput = new String(input);
-//    input = input.replaceAll("_", "");
-//
-//    final LinkedList<Character> buffer = new LinkedList<Character>();
-//    for (char c : input.toCharArray()) {
-//      // allow all letters, digits, dot, plus, minus,
-//      final boolean charIsOk = isLetter(c) || isDec(c) || c == '-' || c == '+' || c == '.';
-//      if (!charIsOk) {
-//        throw new RuntimeException("not a number: " + input);
-//      }
-//
-//      buffer.add(c);
-//    }
-//
-//    char main_sign = '+';
-//    if (buffer.peekFirst() == '-' || buffer.peekFirst() == '+') {
-//      main_sign = buffer.removeFirst();
-//    }
-//
-//    StringBuilder dec = new StringBuilder();
-//    StringBuilder mnt = new StringBuilder();
-//    StringBuilder exp = new StringBuilder();
-//    StringBuilder suf = new StringBuilder();
-//    char exp_sign = '+';
-//
-//    boolean isBin = false;
-//    boolean isOct = false;
-//    boolean isHex = false;
-//
-//    if (buffer.size() > 2) {
-//      char c1 = buffer.get(0);
-//      char c2 = buffer.get(1);
-//      if (c1 == '0' && (c2 == 'b' || c2 == 'B')) {
-//        isBin = true;
-//      }
-//      if ((c1 == '0' && (c2 == 'o' || c2 == 'O')) || (c1 == '0' && isOct(c2))) {
-//        isOct = true;
-//      }
-//      if (c1 == '0' && (c2 == 'x' || c2 == 'X')) {
-//        isHex = true;
-//      }
-//    }
-//
-//    if (isBin || isOct || isHex) {
-//      if (isOct) {
-//        buffer.removeFirst();
-//        if (buffer.peekFirst() == 'o' || buffer.peekFirst() == 'O') {
-//          buffer.removeFirst();
-//        }
-//      } else {
-//        buffer.removeFirst();
-//        buffer.removeFirst();
-//      }
-//
-//      // we'he checked that the buffer.size() > 2,
-//      // and now we know, that there's something here.
-//
-//      if (isBin) {
-//        cutForBase(buffer, dec, 2);
-//      }
-//
-//      if (isOct) {
-//        cutForBase(buffer, dec, 8);
-//      }
-//
-//      if (isHex) {
-//        cutForBase(buffer, dec, 16);
-//        exp_sign = cutMntExp(buffer, mnt, exp, 16);
-//      }
-//
-//    }
-//
-//    else {
-//
-//      if (buffer.peekFirst() == '.') {
-//        exp_sign = cutMntExp(buffer, mnt, exp, 10);
-//      }
-//
-//      else {
-//
-//        // parse decimal|floating|floating_exponent
-//
-//        if (!isDec(buffer.get(0))) {
-//          throw new RuntimeException("not a number: " + input);
-//        }
-//
-//        cutForBase(buffer, dec, 10);
-//        exp_sign = cutMntExp(buffer, mnt, exp, 10);
-//      }
-//
-//    }
-//
-//    while (!buffer.isEmpty()) {
-//      suf.append(buffer.removeFirst());
-//    }
-//
-//  }

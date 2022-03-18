@@ -29,10 +29,10 @@ struct strtox {
     // evaltype = FLOATING
     // evalbase = B16
     enum {
-        EVALTYPE_ERROR = -1, FLOATING, INTEGER,
+        EVALTYPE_ERROR = -1, EVALTYPE_FLOATING, EVALTYPE_INTEGER,
     } evaltype;
     enum {
-        EVALBASE_ERROR = -1, B2 = 2, B8 = 8, B10 = 10, B16 = 16,
+        EVALBASE_ERROR = -1, EVALBASE_2 = 2, EVALBASE_8 = 8, EVALBASE_10 = 10, EVALBASE_16 = 16,
     } evalbase;
 
     // We keep the whole parsed data only because
