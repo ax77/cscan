@@ -304,10 +304,10 @@ void test_charbuf()
 
 void test_eval()
 {
-    assert_true(1024 == evdecimal("010000000000", 2));
-    assert_true(1024 == evdecimal("2000", 8));
-    assert_true(1024 == evdecimal("1024", 10));
-    assert_true(1024 == evdecimal("400", 16));
+    assert_true(1024 == eval_integer("010000000000", 2));
+    assert_true(1024 == eval_integer("2000", 8));
+    assert_true(1024 == eval_integer("1024", 10));
+    assert_true(1024 == eval_integer("400", 16));
 
     Strtox *data = parse_number("0x1.cd05bc61f9e57p+18");
     assert_true(FLOATING_16 == data->evaltype);

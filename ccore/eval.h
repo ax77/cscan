@@ -3,8 +3,8 @@
 
 #include <stddef.h>
 
-size_t evdecimal(char *dec, unsigned base);
-double evalhexfloat(char *dec, char *mnt, char *exp, char sig);
-double evaldecfloat(char *dec, char *mnt, char *exp, char sig);
+size_t eval_integer(char *dec, unsigned base);
+double eval_float_16(char *dec, char *mnt, char *exp, char sig);
+double eval_float_10(char *dec, char *mnt, char *exp, char sig);
 
 #endif /* CCORE_EVAL_H_ */

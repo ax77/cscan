@@ -51,12 +51,12 @@ struct strtox {
     char exp_sign;
     char *suf;
 
-    union {
-        ptrdiff_t i64;
-        size_t u64;
-        float f32;
-        double f64;
-    };
+    // yeah, not a union.
+    // need a clean data, without any garbage.
+    ptrdiff_t i64;
+    size_t u64;
+    float f32;
+    double f64;
 };
 
 Strtox *parse_number(char *n);

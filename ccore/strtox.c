@@ -208,21 +208,46 @@ Strtox *parse_number(char *n)
     return result;
 }
 
+static void set_double(Strtox *n, double x)
+{
+    n->i64 = (ptrdiff_t) x;
+    n->u64 = (size_t) x;
+    n->f32 = (float) x;
+    n->f64 = (double) x;
+}
+
+static void set_unsigned(Strtox *n, size_t x)
+{
+    n->i64 = (ptrdiff_t) x;
+    n->u64 = (size_t) x;
+    n->f32 = (float) x;
+    n->f64 = (double) x;
+}
+
+static void set_signed(Strtox *n, ptrdiff_t x)
+{
+    n->i64 = (ptrdiff_t) x;
+    n->u64 = (size_t) x;
+    n->f32 = (float) x;
+    n->f64 = (double) x;
+}
+
 static int evaluate(Strtox *n)
 {
     if (n->evaltype == FLOATING_10 || n->evaltype == FLOATING_16) {
         if (n->evaltype == FLOATING_10) {
-            double d = evaldecfloat(n->dec, n->mnt, n->exp, n->exp_sign);
-            n->f64 = d;
+            double d = eval_float_10(n->dec, n->mnt, n->exp, n->exp_sign);
+            set_double(n, d);
         } else {
-            double d = evalhexfloat(n->dec, n->mnt, n->exp, n->exp_sign);
-            n->f64 = d;
+            double d = eval_float_16(n->dec, n->mnt, n->exp, n->exp_sign);
+            set_double(n, d);
         }
         return 0;
     }
 
     assert(n->evaltype == 2 || n->evaltype == 8 || n->evaltype == 10 || n->evaltype == 16);
-    n->u64 = evdecimal(n->dec, n->evaltype);
+    size_t i = eval_integer(n->dec, n->evaltype);
+    set_unsigned(n, i);
 
     return 1;
 }

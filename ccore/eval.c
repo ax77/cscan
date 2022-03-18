@@ -1,7 +1,7 @@
 #include "ascii.h"
 #include "hdrs.h"
 
-size_t evdecimal(char *dec, unsigned base) {
+size_t eval_integer(char *dec, unsigned base) {
     assert(dec);
 
     size_t len = strlen(dec);
@@ -19,7 +19,7 @@ size_t evdecimal(char *dec, unsigned base) {
 
 }
 
-double evalhexfloat(char *dec, char *mnt, char *exp, char sig) {
+double eval_float_16(char *dec, char *mnt, char *exp, char sig) {
 
     assert(dec);
     assert(mnt);
@@ -73,7 +73,7 @@ double evalhexfloat(char *dec, char *mnt, char *exp, char sig) {
 
 }
 
-double evaldecfloat(char *dec, char *mnt, char *exp, char sig) {
+double eval_float_10(char *dec, char *mnt, char *exp, char sig) {
 
     assert(dec);
     assert(mnt);
