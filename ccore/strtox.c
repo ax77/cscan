@@ -245,10 +245,21 @@ static int evaluate(Strtox *n)
         return 0;
     }
 
-    assert(n->evaltype == 2 || n->evaltype == 8 || n->evaltype == 10 || n->evaltype == 16);
+    assert(strtox_is_integer(n));
     size_t i = eval_integer(n->dec, n->evaltype);
     set_unsigned(n, i);
 
     return 1;
 }
 
+int strtox_is_integer(Strtox *n)
+{
+    assert(n);
+    return n->evaltype == 2 || n->evaltype == 8 || n->evaltype == 10 || n->evaltype == 16;
+}
+
+int strtox_is_floating(Strtox *n)
+{
+    assert(n);
+    return n->evaltype == FLOATING_10 || n->evaltype == FLOATING_16;
+}

@@ -5,12 +5,12 @@
 #include "vec.h"
 
 extern char EMPTY_STRBUF_STR[];
-#define STR_INIT  { .buf = EMPTY_STRBUF_STR, .len = 0, .alloc = 0, .offset = 0 }
+#define STR_INIT  { .buf = EMPTY_STRBUF_STR, .len = 0, .alloc = 0 }
 
 typedef struct strbuf Str;
 struct strbuf {
     char *buf;
-    size_t len, alloc, offset;
+    size_t len, alloc;
 };
 
 int sb_addc(Str *s, char c);
@@ -34,8 +34,6 @@ vec *sb_split_char(char * where, char sep, int include_empty);
 char *normalize(char *given);
 int strequal(void *a, void *b);
 char *sb_buf_or_empty(Str *sb);
-int sb_nextc(Str *buf);
-int sb_peekc(Str *buf);
 
 int sb_pop(Str *buf);
 int sb_adds_rev(Str *buf, char *input);

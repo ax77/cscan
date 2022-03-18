@@ -8,6 +8,7 @@
 #ifndef CCORE_STRTOX_H_
 #define CCORE_STRTOX_H_
 
+#include <assert.h>
 #include <stddef.h>
 
 /// NOTE:
@@ -60,5 +61,9 @@ struct strtox {
 };
 
 Strtox *parse_number(char *n);
+
+int strtox_is_integer(Strtox *n);
+
+int strtox_is_floating(Strtox *n);
 
 #endif /* CCORE_STRTOX_H_ */

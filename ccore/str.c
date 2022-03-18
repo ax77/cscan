@@ -437,24 +437,6 @@ char *normalize(char *given)
     return sb->buf;
 }
 
-int sb_nextc(Str *buf)
-{
-    assert(buf && buf->buf);
-    if (buf->offset >= buf->len) {
-        return -1;
-    }
-    return buf->buf[buf->offset++];
-}
-
-int sb_peekc(Str *buf)
-{
-    assert(buf && buf->buf);
-    if (buf->offset >= buf->len) {
-        return -1;
-    }
-    return buf->buf[buf->offset];
-}
-
 int sb_pop(Str *buf)
 {
     assert(buf);
