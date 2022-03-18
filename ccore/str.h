@@ -38,6 +38,8 @@ int sb_peekc(Str *buf);
 
 int sb_pop(Str *buf);
 int sb_adds_rev(Str *buf, char *input);
+int sb_is_empty(Str *buf);
+int sb_peek_last(Str *buf);
 
 #endif /* STR_H_ */
 

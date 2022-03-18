@@ -484,3 +484,16 @@ int sb_adds_rev(Str *buf, char *input)
     return n;
 }
 
+int sb_is_empty(Str *buf)
+{
+    assert(buf);
+    return buf->len == 0;
+}
+
+int sb_peek_last(Str *buf)
+{
+    assert(buf);
+    assert(buf->len);
+    return buf->buf[buf->len - 1];
+}
+
