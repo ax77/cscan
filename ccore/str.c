@@ -355,7 +355,7 @@ int strequal(void *a, void *b)
     return strcmp(str_1, str_2) == 0;
 }
 
-static char *content(Str *sb)
+char *sb_buf_or_empty(Str *sb)
 {
     if (sb->len == 0) {
         return cc_strdup("");
@@ -379,7 +379,7 @@ vec * sb_split_char(char * where, char sep, int include_empty)
         char c = where[i];
         if (c == sep) {
             if (sb.len > 0 || (sb.len == 0 && include_empty)) {
-                vec_push(lines, content(&sb));
+                vec_push(lines, sb_buf_or_empty(&sb));
             }
             sb_reset(&sb);
             continue;
@@ -388,7 +388,7 @@ vec * sb_split_char(char * where, char sep, int include_empty)
     }
 
     if (sb.len > 0 || (sb.len == 0 && include_empty)) {
-        vec_push(lines, content(&sb));
+        vec_push(lines, sb_buf_or_empty(&sb));
     }
     return lines;
 }
@@ -482,6 +482,15 @@ int sb_adds_rev(Str *buf, char *input)
     }
 
     return n;
+}
+
+int sb_char_at(Str *buf, size_t index)
+{
+    assert(buf);
+    assert(buf->buf);
+    assert(buf->len);
+    assert(index < buf->len);
+    return buf->buf[index];
 }
 
 int sb_is_empty(Str *buf)

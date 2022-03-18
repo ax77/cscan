@@ -29,12 +29,17 @@ struct strtox {
     // evaltype = FLOATING
     // evalbase = B16
     enum {
-        FLOATING, INTEGER,
+        EVALTYPE_ERROR = -1, FLOATING, INTEGER,
     } evaltype;
     enum {
-        B2 = 2, B8 = 8, B10 = 10, B16 = 16,
+        EVALBASE_ERROR = -1, B2 = 2, B8 = 8, B10 = 10, B16 = 16,
     } evalbase;
 
+    // We keep the whole parsed data only because
+    // we need to test whether the parser have recognized all
+    // things correctly. And also - we may interfere the
+    // type according to the suffix we parsed.
+    //
     // 0x1.c0f8663623b19p+14
     // main_sign = '+'
     // dec       = "1"
@@ -57,5 +62,7 @@ struct strtox {
         double f64;
     };
 };
+
+Strtox *parse_number(char *n);
 
 #endif /* CCORE_STRTOX_H_ */

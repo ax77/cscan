@@ -33,6 +33,7 @@ int strends(char *what, char *with);
 vec *sb_split_char(char * where, char sep, int include_empty);
 char *normalize(char *given);
 int strequal(void *a, void *b);
+char *sb_buf_or_empty(Str *sb);
 int sb_nextc(Str *buf);
 int sb_peekc(Str *buf);
 
@@ -40,6 +41,7 @@ int sb_pop(Str *buf);
 int sb_adds_rev(Str *buf, char *input);
 int sb_is_empty(Str *buf);
 int sb_peek_last(Str *buf);
+int sb_char_at(Str *buf, size_t index);
 
 #endif /* STR_H_ */
 

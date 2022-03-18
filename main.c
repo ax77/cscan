@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <time.h>
 
+#include "ccore/strtox.h"
 #include "ccore/buf.h"
 #include "ccore/map.h"
 #include "ccore/str.h"
@@ -316,6 +317,9 @@ void test_eval() {
 
     //printf("%f\n", evalhexfloat("1", "cd05bc61f9e57", "18", '+'));
     //printf("%f\n", evaldecfloat("472086", "94347999006", "", '+'));
+
+    Strtox *data = parse_number("0x1.cd05bc61f9e57p+18");
+    printf("%s\n", data->dec);
 }
 
 int main(void)

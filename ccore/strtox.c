@@ -1,6 +1,7 @@
 #include "hdrs.h"
 #include "str.h"
 #include "ascii.h"
+#include "strtox.h"
 
 //  private static void cutForBase(LinkedList<Character> buffer, StringBuilder out, int base) {
 //
@@ -22,7 +23,8 @@
 //    }
 //  }
 
-void cut_for_base(Str *buffer, Str *out, unsigned base) {
+static void cut_for_base(Str *buffer, Str *out, unsigned base)
+{
     assert(buffer);
     assert(out);
 
@@ -33,9 +35,8 @@ void cut_for_base(Str *buffer, Str *out, unsigned base) {
 
     while (!sb_is_empty(buffer)) {
         char peek = sb_peek_last(buffer);
-        int need_break = (base == 2 && !is_bin(peek))
-                || (base == 8 && !is_oct(peek)) || (base == 10 && !is_dec(peek))
-                || (base == 16 && !is_hex(peek));
+        int need_break = (base == 2 && !is_bin(peek)) || (base == 8 && !is_oct(peek))
+                || (base == 10 && !is_dec(peek)) || (base == 16 && !is_hex(peek));
         if (need_break) {
             break;
         }
@@ -78,7 +79,8 @@ void cut_for_base(Str *buffer, Str *out, unsigned base) {
 //    return exp_sign;
 //  }
 
-char cut_mnt_exp(Str *buffer, Str *mnt, Str *exp, unsigned mnt_base) {
+static char cut_mnt_exp(Str *buffer, Str *mnt, Str *exp, unsigned mnt_base)
+{
 
     assert(buffer);
     assert(mnt);
@@ -117,6 +119,112 @@ char cut_mnt_exp(Str *buffer, Str *mnt, Str *exp, unsigned mnt_base) {
 
     return exp_sign;
 }
+
+Strtox *parse_number(char *n)
+{
+    assert(n);
+    size_t len = strlen(n);
+    assert(len && "an empty input data");
+
+    Str input = STR_INIT;
+    sb_adds_rev(&input, n);
+
+    Str dec = STR_INIT;
+    Str mnt = STR_INIT;
+    Str exp = STR_INIT;
+    Str suf = STR_INIT;
+
+    char main_sign = '+';
+    if (sb_peek_last(&input) == '+' || sb_peek_last(&input) == '-') {
+        main_sign = sb_pop(&input);
+    }
+
+    char exp_sign = '+';
+    int isBin = false;
+    int isOct = false;
+    int isHex = false;
+
+    // NOTE: we're dealing with reversed string
+    if (input.len > 2) {
+        char c1 = sb_char_at(&input, input.len - 1);
+        char c2 = sb_char_at(&input, input.len - 2);
+        if (c1 == '0' && (c2 == 'b' || c2 == 'B')) {
+            isBin = true;
+        }
+        if ((c1 == '0' && (c2 == 'o' || c2 == 'O')) || (c1 == '0' && is_oct(c2))) {
+            isOct = true;
+        }
+        if (c1 == '0' && (c2 == 'x' || c2 == 'X')) {
+            isHex = true;
+        }
+    }
+
+    if (isBin || isOct || isHex) {
+        if (isOct) {
+            sb_pop(&input);
+            if (sb_peek_last(&input) == 'o' || sb_peek_last(&input) == 'O') {
+                sb_pop(&input);
+            }
+        } else {
+            sb_pop(&input);
+            sb_pop(&input);
+        }
+
+        // we'he checked that the buffer.size() > 2,
+        // and now we know, that there's something here.
+
+        if (isBin) {
+            cut_for_base(&input, &dec, 2);
+        }
+
+        if (isOct) {
+            cut_for_base(&input, &dec, 8);
+        }
+
+        if (isHex) {
+            cut_for_base(&input, &dec, 16);
+            exp_sign = cut_mnt_exp(&input, &mnt, &exp, 16);
+        }
+
+    }
+
+    else {
+
+        if (sb_peek_last(&input) == '.') {
+            exp_sign = cut_mnt_exp(&input, &mnt, &exp, 10);
+        }
+
+        else {
+
+            // parse decimal|floating|floating_exponent
+
+            if (!is_dec(sb_peek_last(&input))) {
+                cc_fatal("not a number: %s\n", n);
+            }
+
+            cut_for_base(&input, &dec, 10);
+            exp_sign = cut_mnt_exp(&input, &mnt, &exp, 10);
+        }
+
+    }
+
+    while (!sb_is_empty(&input)) {
+        sb_addc(&suf, sb_pop(&input));
+    }
+
+    Strtox *result = cc_malloc(sizeof(struct strtox));
+    result->evalbase = EVALBASE_ERROR;
+    result->evaltype = EVALTYPE_ERROR;
+
+    result->main_sign = main_sign;
+    result->dec = sb_buf_or_empty(&dec);
+    result->mnt = sb_buf_or_empty(&mnt);
+    result->exp = sb_buf_or_empty(&exp);
+    result->exp_sign = exp_sign;
+    result->suf = sb_buf_or_empty(&suf);
+    return result;
+}
+
 //
 //  public static IntLiteral parse(String input) {
 //
