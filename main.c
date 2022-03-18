@@ -16,6 +16,7 @@
 #include "ccore/uuid4.h"
 #include "ccore/fdesc.h"
 #include "ccore/eval.h"
+#include "tests.h"
 
 void test_strstarts_1()
 {
@@ -405,6 +406,7 @@ int main(void)
     test_charbuf();
     test_strmid_again();
     test_eval();
+    test_strtox_stdlib();
 
     printf("\n:ok:\n");
     return 0;
