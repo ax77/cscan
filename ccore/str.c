@@ -56,10 +56,8 @@ int sb_addc(Str *s, char c)
     return 1;
 }
 
-int sb_adds(Str *s, char *news)
+size_t sb_adds(Str *s, char *news)
 {
-    sb_check_allocated(s);
-
     if (!news) {
         return 0;
     }
@@ -428,13 +426,13 @@ char *normalize(char *given)
         vec_push(worklist, cc_strdup(part->buf));
     }
 
-    Str * sb = sb_new();
+    Str sb = STR_INIT;
     for (size_t i = 0; i < worklist->size; i++) {
         char *s = vec_get(worklist, i);
-        sb_adds(sb, s);
+        sb_adds(&sb, s);
     }
 
-    return sb->buf;
+    return sb_buf_or_empty(&sb);
 }
 
 int sb_pop(Str *buf)

@@ -14,7 +14,7 @@ struct strbuf {
 };
 
 int sb_addc(Str *s, char c);
-int sb_adds(Str *s, char *news);
+size_t sb_adds(Str *s, char *news);
 Str *sb_new();
 Str *sb_news(char * str);
 void sb_reset(Str *s);
