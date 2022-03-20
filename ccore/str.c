@@ -35,14 +35,25 @@ int sb_addc(Str *s, char c)
     assert(s);
     assert(s->buf);
 
+    // Two cases: whether the buf is set as default global varible
+    // or alloc is set to zero. It means that the buffer is used as
+    // a value, not a pointer. We should support the correct allocation
+    // at the first time the buffer is used.
     if (s->buf == EMPTY_STRBUF_STR) {
         assert(s->len == 0);
         assert(s->alloc == 0);
         s->alloc = 8;
         s->buf = cc_malloc(s->alloc * sizeof(char));
-    } else {
-        sb_check_allocated(s);
     }
+    if (s->alloc == 0) {
+        assert(s->len == 0);
+        assert(s->buf == EMPTY_STRBUF_STR);
+        s->alloc = 8;
+        s->buf = cc_malloc(s->alloc * sizeof(char));
+    }
+
+    // must be allocated here.
+    sb_check_allocated(s);
 
     if (!c) {
         return 0;
@@ -69,7 +80,7 @@ size_t sb_adds(Str *s, char *news)
     return i;
 }
 
-Str *sb_new()
+Str* sb_new()
 {
     Str *rv = cc_malloc(sizeof(Str));
     rv->len = 0;
@@ -79,14 +90,14 @@ Str *sb_new()
     return rv;
 }
 
-Str *sb_news(char * str)
+Str* sb_news(char *str)
 {
     Str *rv = sb_new();
     sb_adds(rv, str);
     return rv;
 }
 
-char *sb_left(char *from, size_t much)
+char* sb_left(char *from, size_t much)
 {
     assert(from);
     size_t len = strlen(from);
@@ -111,7 +122,7 @@ char *sb_left(char *from, size_t much)
     return res.buf;
 }
 
-char *sb_right(char *from, size_t much)
+char* sb_right(char *from, size_t much)
 {
     assert(from);
     size_t len = strlen(from);
@@ -139,7 +150,7 @@ char *sb_right(char *from, size_t much)
     return res.buf;
 }
 
-char *sb_mid(char *from, size_t begin, size_t much)
+char* sb_mid(char *from, size_t begin, size_t much)
 {
     assert(from);
     size_t len = strlen(from);
@@ -166,7 +177,7 @@ char *sb_mid(char *from, size_t begin, size_t much)
     return res.buf;
 }
 
-char *sb_trim(char *from)
+char* sb_trim(char *from)
 {
     assert(from);
     size_t len = strlen(from);
@@ -201,20 +212,20 @@ char *sb_trim(char *from)
     return res.buf;
 }
 
-static bool next_is(char * input, char * pattern, size_t input_len, size_t begin_index,
-        size_t end_index, size_t pattern_len)
+static bool next_is(char *input, char *pattern, size_t input_len,
+        size_t begin_index, size_t end_index, size_t pattern_len)
 {
     if (end_index > input_len) {
         return false;
     }
     // TODO: we may do this in a much simple way, without any allocations :)
-    char * substring = sb_mid(input, begin_index, pattern_len);
+    char *substring = sb_mid(input, begin_index, pattern_len);
     int res = strcmp(substring, pattern) == 0;
     free(substring);
     return res;
 }
 
-char * sb_replace(char * input, char * pattern, char * replacement)
+char* sb_replace(char *input, char *pattern, char *replacement)
 {
     if (input == NULL || strlen(input) == 0) {
         // it is more clear and simple to return empty value instead of null or exception.
@@ -235,7 +246,8 @@ char * sb_replace(char * input, char * pattern, char * replacement)
 
     for (size_t offset = 0; offset < input_len;) {
         size_t end_index = pattern_len + offset;
-        if (next_is(input, pattern, input_len, offset, end_index, pattern_len)) {
+        if (next_is(input, pattern, input_len, offset, end_index,
+                pattern_len)) {
             if (repl_len > 0) {
                 sb_adds(&sb, replacement);
             }
@@ -250,7 +262,7 @@ char * sb_replace(char * input, char * pattern, char * replacement)
     return sb.buf;
 }
 
-char *normalize_slashes(char *s)
+char* normalize_slashes(char *s)
 {
     assert(s);
 
@@ -353,7 +365,7 @@ int strequal(void *a, void *b)
     return strcmp(str_1, str_2) == 0;
 }
 
-char *sb_buf_or_empty(Str *sb)
+char* sb_buf_or_empty(Str *sb)
 {
     if (sb->len == 0) {
         return cc_strdup("");
@@ -361,11 +373,11 @@ char *sb_buf_or_empty(Str *sb)
     return sb->buf;
 }
 
-vec * sb_split_char(char * where, char sep, int include_empty)
+vec* sb_split_char(char *where, char sep, int include_empty)
 {
     assert(where);
 
-    vec * lines = vec_new();
+    vec *lines = vec_new();
     size_t len = strlen(where);
 
     if (len == 0) {
@@ -392,12 +404,12 @@ vec * sb_split_char(char * where, char sep, int include_empty)
 }
 
 // TODO: simplify mem-use
-char *normalize(char *given)
+char* normalize(char *given)
 {
-    char * tmp = normalize_slashes(given);
-    vec * splitten = sb_split_char(tmp, '/', 1);
+    char *tmp = normalize_slashes(given);
+    vec *splitten = sb_split_char(tmp, '/', 1);
 
-    vec * worklist = vec_new();
+    vec *worklist = vec_new();
     if (is_abs_unix(tmp)) {
         vec_push(worklist, cc_strdup("/"));
     }
