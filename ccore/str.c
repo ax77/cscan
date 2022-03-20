@@ -22,18 +22,12 @@ void sb_reset(Str *s)
     s->alloc = 0;
 }
 
-static void sb_grow(Str *s)
-{
-    sb_check_allocated(s);
-    s->alloc += 2;
-    s->alloc *= 2;
-    s->buf = cc_realloc(s->buf, s->alloc * sizeof(char));
-}
-
-int sb_addc(Str *s, char c)
+static size_t sb_grow(Str *s, size_t extra)
 {
     assert(s);
     assert(s->buf);
+    assert(extra);
+    assert(extra < 3); // grow for extra 1 or 2 elements
 
     // Two cases: whether the buf is set as default global varible
     // or alloc is set to zero. It means that the buffer is used as
@@ -44,23 +38,42 @@ int sb_addc(Str *s, char c)
         assert(s->alloc == 0);
         s->alloc = 8;
         s->buf = cc_malloc(s->alloc * sizeof(char));
+        return s->alloc;
     }
     if (s->alloc == 0) {
         assert(s->len == 0);
         assert(s->buf == EMPTY_STRBUF_STR);
         s->alloc = 8;
         s->buf = cc_malloc(s->alloc * sizeof(char));
+        return s->alloc;
     }
 
     // must be allocated here.
     sb_check_allocated(s);
 
+    // And here we'll check whether the allocated size
+    // suits for the data we have, with adding a little
+    // extra we need to append to the buffer.
+    if ((s->len + extra) >= s->alloc) {
+        s->alloc += 2;
+        s->alloc *= 2;
+        s->buf = cc_realloc(s->buf, s->alloc * sizeof(char));
+    }
+
+    return s->alloc;
+}
+
+int sb_addc(Str *s, char c)
+{
+    assert(s);
+    assert(s->buf);
+
     if (!c) {
         return 0;
     }
-    if ((s->len + 2) >= s->alloc) {
-        sb_grow(s);
-    }
+
+    sb_grow(s, 2);
+
     s->buf[s->len++] = c;
     s->buf[s->len] = '\0';
 
