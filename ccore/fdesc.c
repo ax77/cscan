@@ -180,3 +180,32 @@ char* hb_readfile(const char *filename, size_t *szout)
     assert(0);
     return NULL;
 }
+
+char* hb_readfile2(char *filename)
+{
+    assert(filename);
+
+    FILE *fp = fopen(filename, "rb");
+    assert(fp);
+
+    struct stat statbuf;
+    int ret = stat(filename, &statbuf);
+    assert(ret >= 0);
+
+    mode_t mode = statbuf.st_mode;
+    assert(S_ISREG(mode));
+
+    size_t fsize = statbuf.st_size;
+
+    char *buffer = calloc(1u, fsize + 1u);
+    assert(buffer);
+
+    size_t rsize = fread(buffer, sizeof(char), fsize, fp);
+    assert(fsize == rsize);
+
+    int closeret = fclose(fp);
+    assert(closeret == 0);
+
+    return buffer;
+}
+

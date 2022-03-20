@@ -4,6 +4,7 @@
 #include "hdrs.h"
 
 char* hb_readfile(const char *filename, size_t *szout);
+char* hb_readfile2(char *filename);
 
 int hb_read_byte(int fd);
 int hb_open(char *filename);

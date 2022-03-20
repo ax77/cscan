@@ -3,6 +3,7 @@
 
 size_t eval_integer(char *dec, unsigned base) {
     assert(dec);
+    assert(base == 2 || base == 8 || base == 10 || base == 16);
 
     size_t len = strlen(dec);
     assert(len);
@@ -24,6 +25,7 @@ double eval_float_16(char *dec, char *mnt, char *exp, char sig) {
     assert(dec);
     assert(mnt);
     assert(exp);
+    assert(sig == '-' || sig == '+');
 
     size_t declen = strlen(dec);
     size_t mntlen = strlen(mnt);
@@ -78,6 +80,7 @@ double eval_float_10(char *dec, char *mnt, char *exp, char sig) {
     assert(dec);
     assert(mnt);
     assert(exp);
+    assert(sig == '-' || sig == '+');
 
     size_t declen = strlen(dec);
     size_t mntlen = strlen(mnt);
