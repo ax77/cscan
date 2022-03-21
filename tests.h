@@ -16,5 +16,6 @@ void test_strends_4();
 void test_strends_5();
 void test_strmid_1();
 void test_normalize_1();
+void test_free();
 
 #endif /* TESTS_H_ */

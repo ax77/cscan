@@ -174,7 +174,7 @@ char* hb_readfile(const char *filename, size_t *szout)
         fclose(fp);
     }
     if (data) {
-        cc_free(data);
+        cc_free(&data);
     }
 
     assert(0);

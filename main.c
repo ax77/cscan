@@ -265,6 +265,7 @@ int main(void)
     test_strtox_stdlib();
 
     test_str_0();
+    test_free();
 
     printf("\n:ok:\n");
     return 0;

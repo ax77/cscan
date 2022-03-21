@@ -15,7 +15,7 @@ void *internal_malloc(size_t size, const char *file, int line);
 #define cc_strdup(str) internal_strdup(str, __FILE__, __LINE__)
 char *internal_strdup(char *str, const char *file, int line);
 
-#define cc_free(ptr) internal_free(ptr, __FILE__, __LINE__)
-void internal_free(void *ptr, const char *file, int line);
+#define cc_free(ptr) internal_free((void**) ptr, __FILE__, __LINE__)
+void internal_free(void **ptr, const char *file, int line);
 
 #endif

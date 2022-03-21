@@ -1,6 +1,7 @@
 #include "ccore/hdrs.h"
 #include "ccore/utest.h"
 #include "ccore/str.h"
+#include "ccore/xmem.h"
 
 void test_str_0() {
     Str s = STR_INIT;
@@ -152,4 +153,52 @@ void test_normalize_1()
     assertEquals("/", normalize("/"));
     assertEquals("../", normalize("../"));
 }
+
+void test_free() {
+    char *tmp = cc_malloc(32);
+    cc_free(&tmp);
+    cc_free(&tmp);
+    cc_free(&tmp);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

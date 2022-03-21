@@ -84,27 +84,30 @@ char* internal_strdup(char *str, const char *file, int line)
     return newstr;
 }
 
-void internal_free(void *ptr, const char *file, int line)
+void internal_free(void **ptr, const char *file, int line)
 {
     // Unnecessary, just for short circuit.
-    if (!ptr) {
+    if (!(*ptr)) {
         return;
     }
 
     // If we unwrap a buffer that was empty, and then trying to free the content
     // of a stack data.
-    if (ptr == EMPTY_STRBUF_STR) {
+    if ((*ptr) == EMPTY_STRBUF_STR) {
         return;
     }
 
     // Slight check whether the pointer is a valid address.
-    if (ptr < XMEM_MIN_ADDRESS || ptr > XMEM_MAX_ADDRESS) {
+    if ((*ptr) < XMEM_MIN_ADDRESS || (*ptr) > XMEM_MAX_ADDRESS) {
         cc_fatal(
                 "You want to free a pointer that wan't allocated by cc_malloc(). %s:%d -> %p\n",
-                file, line, ptr);
+                file, line, (*ptr));
     }
 
-    free(ptr);
+    free(*ptr);
+
+    // To prevent (perhaps) a double free()
+    *ptr = NULL;
 }
 
 
