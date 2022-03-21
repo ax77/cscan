@@ -17,5 +17,6 @@ void test_strends_5();
 void test_strmid_1();
 void test_normalize_1();
 void test_free();
+void test_realloc_in_place();
 
 #endif /* TESTS_H_ */

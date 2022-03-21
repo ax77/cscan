@@ -266,6 +266,7 @@ int main(void)
 
     test_str_0();
     test_free();
+    test_realloc_in_place();
 
     printf("\n:ok:\n");
     return 0;
