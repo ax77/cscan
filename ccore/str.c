@@ -234,7 +234,7 @@ static bool next_is(char *input, char *pattern, size_t input_len,
     // TODO: we may do this in a much simple way, without any allocations :)
     char *substring = sb_mid(input, begin_index, pattern_len);
     int res = strcmp(substring, pattern) == 0;
-    free(substring);
+    cc_free(substring);
     return res;
 }
 
@@ -440,7 +440,8 @@ char* normalize(char *given)
                 size_t lastidx = worklist->size - 1;
                 char *last = vec_get(worklist, lastidx);
                 if (!is_abs_path(last)) {
-                    vec_pop(worklist);
+                    char *tmp = vec_pop(worklist);
+                    cc_free(tmp);
                     continue;
                 }
             }

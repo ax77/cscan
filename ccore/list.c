@@ -1,23 +1,11 @@
 #include "list.h"
+#include "xmem.h"
 
 // Test routine
 
 static void *xmalloc(size_t size)
 {
-    assert(size > 0);
-    assert(size<INT_MAX);
-
-    void *ptr = NULL;
-    ptr = calloc(1u, size);
-    if (ptr == NULL) {
-        ptr = calloc(1u, size);
-        if (ptr == NULL) {
-            ptr = calloc(1u, size);
-        }
-    }
-
-    assert(ptr);
-    return ptr;
+    return cc_malloc(size);
 }
 
 #define assert_true(expr) do {\

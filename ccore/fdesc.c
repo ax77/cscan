@@ -174,7 +174,7 @@ char* hb_readfile(const char *filename, size_t *szout)
         fclose(fp);
     }
     if (data) {
-        free(data);
+        cc_free(data);
     }
 
     assert(0);
@@ -197,7 +197,7 @@ char* hb_readfile2(char *filename)
 
     size_t fsize = statbuf.st_size;
 
-    char *buffer = calloc(1u, fsize + 1u);
+    char *buffer = cc_malloc(fsize + 1u);
     assert(buffer);
 
     size_t rsize = fread(buffer, sizeof(char), fsize, fp);

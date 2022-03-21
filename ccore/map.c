@@ -58,8 +58,8 @@ void HashMap_free(HashMap* self)
     assert(self);
 
     HashMap_clear(self);
-    free(self->table);
-    free(self);
+    cc_free(self->table);
+    cc_free(self);
 }
 
 size_t HashMap_size(HashMap* self)
@@ -112,7 +112,7 @@ static void hashmap_rehash(HashMap* self, Entry** new_table, size_t new_capacity
         }
     }
 
-    free(self->table);
+    cc_free(self->table);
     self->table = new_table;
     self->capacity = new_capacity;
 }
@@ -177,7 +177,7 @@ void* HashMap_remove(HashMap* self, void* key)
                 prev->next = next;
             }
             self->size--;
-            free(e);
+            cc_free(e);
             return val;
         }
     }
@@ -196,7 +196,7 @@ void HashMap_clear(HashMap* self)
         Entry* next;
         for (; e; e = next) {
             next = e->next;
-            free(e);
+            cc_free(e);
         }
         self->table[i] = NULL;
     }
