@@ -19,4 +19,7 @@ void test_normalize_1();
 void test_free();
 void test_realloc_in_place();
 
+void test_vec0();
+void test_vec1();
+
 #endif /* TESTS_H_ */

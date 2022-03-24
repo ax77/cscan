@@ -1,7 +1,6 @@
 #include "str.h"
 #include "xmem.h"
 #include "ascii.h"
-#include "vec.h"
 
 char EMPTY_STRBUF_STR[1];
 
@@ -386,11 +385,11 @@ char* sb_buf_or_empty(Str *sb)
     return sb->buf;
 }
 
-vec* sb_split_char(char *where, char sep, int include_empty)
+vec(str)* sb_split_char(char *where, char sep, int include_empty)
 {
     assert(where);
 
-    vec *lines = vec_new();
+    vec(str) *lines = vec_new(str);
     size_t len = strlen(where);
 
     if (len == 0) {
@@ -402,7 +401,7 @@ vec* sb_split_char(char *where, char sep, int include_empty)
         char c = where[i];
         if (c == sep) {
             if (sb.len > 0 || (sb.len == 0 && include_empty)) {
-                vec_push(lines, sb_buf_or_empty(&sb));
+                vec_push_back(lines, sb_buf_or_empty(&sb));
             }
             sb_reset(&sb);
             continue;
@@ -411,7 +410,7 @@ vec* sb_split_char(char *where, char sep, int include_empty)
     }
 
     if (sb.len > 0 || (sb.len == 0 && include_empty)) {
-        vec_push(lines, sb_buf_or_empty(&sb));
+        vec_push_back(lines, sb_buf_or_empty(&sb));
     }
     return lines;
 }
@@ -420,11 +419,11 @@ vec* sb_split_char(char *where, char sep, int include_empty)
 char* normalize(char *given)
 {
     char *tmp = normalize_slashes(given);
-    vec *splitten = sb_split_char(tmp, '/', 1);
+    vec(str) *splitten = sb_split_char(tmp, '/', 1);
 
-    vec *worklist = vec_new();
+    vec(str) worklist = VEC_INIT(str);
     if (is_abs_unix(tmp)) {
-        vec_push(worklist, cc_strdup("/"));
+        vec_push_back(&worklist, cc_strdup("/"));
     }
 
     for (size_t i = 0; i < splitten->size; i++) {
@@ -436,11 +435,11 @@ char* normalize(char *given)
             continue;
         }
         if (strequal(part->buf, "..")) {
-            if (worklist->size != 0) {
-                size_t lastidx = worklist->size - 1;
-                char *last = vec_get(worklist, lastidx);
+            if (worklist.size != 0) {
+                size_t lastidx = worklist.size - 1;
+                char *last = vec_get(&worklist, lastidx);
                 if (!is_abs_path(last)) {
-                    char *tmp = vec_pop(worklist);
+                    char *tmp = vec_pop_back(&worklist);
                     cc_free(&tmp);
                     continue;
                 }
@@ -449,12 +448,12 @@ char* normalize(char *given)
         if (i < (splitten->size - 1)) {
             sb_addc(part, '/');
         }
-        vec_push(worklist, cc_strdup(part->buf));
+        vec_push_back(&worklist, cc_strdup(part->buf));
     }
 
     Str sb = STR_INIT;
-    for (size_t i = 0; i < worklist->size; i++) {
-        char *s = vec_get(worklist, i);
+    for (size_t i = 0; i < worklist.size; i++) {
+        char *s = vec_get(&worklist, i);
         sb_adds(&sb, s);
     }
 

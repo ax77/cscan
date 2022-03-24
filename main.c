@@ -268,6 +268,9 @@ int main(void)
     test_free();
     test_realloc_in_place();
 
+    test_vec0();
+    test_vec1();
+
     printf("\n:ok:\n");
     return 0;
 }

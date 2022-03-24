@@ -30,7 +30,7 @@ int is_abs_path(char *s);
 int strstarts(char *what, char *with);
 int strends(char *what, char *with);
 
-vec *sb_split_char(char * where, char sep, int include_empty);
+vec(str) *sb_split_char(char * where, char sep, int include_empty);
 char *normalize(char *given);
 int strequal(void *a, void *b);
 char *sb_buf_or_empty(Str *sb);
