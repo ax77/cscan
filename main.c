@@ -270,6 +270,7 @@ int main(void)
 
     test_vec0();
     test_vec1();
+    test_vec2();
 
     printf("\n:ok:\n");
     return 0;

@@ -29,7 +29,7 @@ void internal_fatal(const char *_file, int _line, const char *_func,
     exit(128);
 }
 
-void* intrernal_realloc(void *ptr, size_t newsize, const char *file, int line)
+void* internal_realloc(void *ptr, size_t newsize, const char *file, int line)
 {
     assert(newsize);
     assert(newsize <= INT_MAX);

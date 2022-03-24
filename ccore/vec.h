@@ -82,6 +82,10 @@ static void vec_grow_1##NAME(vec_##NAME *v)                                   \
             v->alloc += 2;                                                    \
             v->alloc *= 2;                                                    \
             v->data = (TYPE *) cc_realloc(v->data, v->alloc * sizeof(TYPE));  \
+                                                                              \
+            for(size_t i = v->size; i < v->alloc; i += 1) {                   \
+                v->data[i] = ((TYPE) 0);                                      \
+            }                                                                 \
         }                                                                     \
     }                                                                         \
 }                                                                             \
