@@ -32,7 +32,7 @@ static char* internal_strdup(char *str)
 //
 size_t realloc_array1(void ***vec, size_t *nr, size_t *alloc)
 {
-    static_assert((CHAR_BIT * sizeof(void*)) == 64, "64");
+    //static_assert((CHAR_BIT * sizeof(void*)) == 64, "64");
 
     assert(vec);
     assert(nr);

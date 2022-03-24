@@ -28,7 +28,7 @@ void test_buf_0()
     CharBuf *buf = charbuf_new("");
     assert_true(buf->size == 0);
 
-    int c = nextc(buf);
+    int c = charbuf_nextc(buf);
     assert_true(c == HC_FEOF);
 }
 
@@ -37,20 +37,20 @@ void test_buf_1()
     CharBuf *buf = charbuf_new("abc");
     assert_true(buf->size == 3);
 
-    assert_true(nextc(buf) == 'a');
-    assert_true(nextc(buf) == 'b');
-    assert_true(nextc(buf) == 'c');
-    assert_true(nextc(buf) == HC_FEOF);
+    assert_true(charbuf_nextc(buf) == 'a');
+    assert_true(charbuf_nextc(buf) == 'b');
+    assert_true(charbuf_nextc(buf) == 'c');
+    assert_true(charbuf_nextc(buf) == HC_FEOF);
 }
 
 void test_buf_2()
 {
     CharBuf *buf = charbuf_new("a\\\nb\\\nc");
 
-    assert_true(nextc(buf) == 'a');
-    assert_true(nextc(buf) == 'b');
-    assert_true(nextc(buf) == 'c');
-    assert_true(nextc(buf) == HC_FEOF);
+    assert_true(charbuf_nextc(buf) == 'a');
+    assert_true(charbuf_nextc(buf) == 'b');
+    assert_true(charbuf_nextc(buf) == 'c');
+    assert_true(charbuf_nextc(buf) == HC_FEOF);
 }
 
 void test_buf_3()
@@ -59,7 +59,7 @@ void test_buf_3()
     char *source = hb_readfile("main.c", &s);
     CharBuf *buf = charbuf_new(source);
     for (;;) {
-        int c = nextc(buf);
+        int c = charbuf_nextc(buf);
         if (c == HC_FEOF) {
             break;
         }
@@ -154,9 +154,9 @@ void test_str_pop()
 void test_charbuf()
 {
     CharBuf *b = charbuf_new("a\\\nb");
-    assert_true('a' == nextc(b));
-    assert_true('b' == nextc(b));
-    assert_true(-1 == nextc(b));
+    assert_true('a' == charbuf_nextc(b));
+    assert_true('b' == charbuf_nextc(b));
+    assert_true(-1 == charbuf_nextc(b));
 }
 
 void test_eval()
@@ -232,6 +232,7 @@ void test_eval()
     assert_true(strequal("L", data->suf));
 }
 
+#if 0
 int main(void)
 {
     test_buf_0();
@@ -275,4 +276,4 @@ int main(void)
     printf("\n:ok:\n");
     return 0;
 }
-
+#endif

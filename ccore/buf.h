@@ -24,7 +24,8 @@ struct char_buf {
 };
 
 CharBuf *charbuf_new(char *from);
-int nextc(CharBuf *b);
-int* next4(CharBuf *buf);
+int charbuf_nextc(CharBuf *b);
+int charbuf_peekc(CharBuf *b);
+int* charbuf_next4(CharBuf *buf);
 
 #endif /* BUF_H_ */
