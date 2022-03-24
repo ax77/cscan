@@ -28,12 +28,14 @@ struct vec_##NAME {                                                           \
 };                                                                            \
                                                                               \
 vec_##NAME * vec_new_##NAME();                                                \
-void         vec_push_##NAME(vec_##NAME *v, TYPE p);                          \
-TYPE         vec_pop_##NAME(vec_##NAME *v);                                   \
-TYPE         vec_get_##NAME(vec_##NAME *v, size_t index);                     \
-TYPE         vec_set_##NAME(vec_##NAME *v, size_t index, TYPE p);             \
-size_t       vec_size_##NAME(vec_##NAME *v);                                  \
-int          vec_is_empty_##NAME(vec_##NAME *v);                              \
+void         vec_push_      ##NAME   (vec_##NAME *v, TYPE p);                 \
+TYPE         vec_pop_       ##NAME   (vec_##NAME *v);                         \
+TYPE         vec_get_       ##NAME   (vec_##NAME *v, size_t index);           \
+TYPE         vec_set_       ##NAME   (vec_##NAME *v, size_t index, TYPE p);   \
+size_t       vec_size_      ##NAME   (vec_##NAME *v);                         \
+int          vec_is_empty_  ##NAME   (vec_##NAME *v);                         \
+void         vec_add_all_   ##NAME   (vec_##NAME *dst, vec_##NAME *src);      \
+void         vec_reset_     ##NAME   (vec_##NAME *v);                         \
                                                                               \
 struct vec_functions_##NAME {                                                 \
     void   (*push_back) (vec_##NAME *v, TYPE p);                              \
@@ -42,17 +44,21 @@ struct vec_functions_##NAME {                                                 \
     TYPE   (*set)       (vec_##NAME *v, size_t index, TYPE p);                \
     size_t (*size)      (vec_##NAME *v);                                      \
     int    (*is_empty)  (vec_##NAME *v);                                      \
+    void   (*add_all)   (vec_##NAME *dst, vec_##NAME *src);                   \
+    void   (*reset)     (vec_##NAME *v);                                      \
 };
 
 #define vec_impl(TYPE, NAME)                                                  \
                                                                               \
 struct vec_functions_##NAME vec_functions_impl_##NAME = {                     \
-    .push_back = &vec_push_##NAME,                                            \
-    .pop_back  = &vec_pop_##NAME,                                             \
-    .get       = &vec_get_##NAME,                                             \
-    .set       = &vec_set_##NAME,                                             \
-    .size      = &vec_size_##NAME,                                            \
-    .is_empty  = &vec_is_empty_##NAME                                         \
+    .push_back = &vec_push_     ##NAME,                                       \
+    .pop_back  = &vec_pop_      ##NAME,                                       \
+    .get       = &vec_get_      ##NAME,                                       \
+    .set       = &vec_set_      ##NAME,                                       \
+    .size      = &vec_size_     ##NAME,                                       \
+    .is_empty  = &vec_is_empty_ ##NAME,                                       \
+    .add_all   = &vec_add_all_  ##NAME,                                       \
+    .reset     = &vec_reset_    ##NAME,                                       \
 };                                                                            \
                                                                               \
 vec_##NAME* vec_new_##NAME()                                                  \
@@ -140,6 +146,25 @@ int vec_is_empty_##NAME(vec_##NAME *v)                                        \
 {                                                                             \
     assert(v);                                                                \
     return v->size == 0;                                                      \
+}                                                                             \
+                                                                              \
+void vec_add_all_##NAME(vec_##NAME *dst, vec_##NAME *src)                     \
+{                                                                             \
+    assert(dst);                                                              \
+    assert(src);                                                              \
+                                                                              \
+    for (size_t i = 0; i < vec_size_##NAME(src); i += 1) {                    \
+        vec_push_##NAME(dst, vec_get_##NAME(src, i));                         \
+    }                                                                         \
+}                                                                             \
+                                                                              \
+void vec_reset_##NAME(vec_##NAME *v)                                          \
+{                                                                             \
+    assert(v);                                                                \
+                                                                              \
+    v->size = 0;                                                              \
+    v->alloc = 0;                                                             \
+    v->data = NULL;                                                           \
 }
 
 #define vec(name) vec_##name
@@ -150,20 +175,12 @@ int vec_is_empty_##NAME(vec_##NAME *v)                                        \
 #define vec_set(container, index, elem) (container)->functions->set(container, index, elem)
 #define vec_size(container) (container)->functions->size(container)
 #define vec_is_empty(container) (container)->functions->is_empty(container)
+#define vec_add_all(container, src) (container)->functions->add_all(container, src)
+#define vec_reset(container) (container)->functions->reset(container)
 
 vec_proto(char, i8)
 vec_proto(unsigned char, u8)
 vec_proto(char*, str)
 
 #endif /* VEC3_H_ */
-
-
-
-
-
-
-
-
-
-
 

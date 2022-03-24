@@ -1,10 +1,14 @@
 #ifndef DRCC_H_
 #define DRCC_H_
 
+#include "ccore/fdesc.h"
+#include "ccore/fnptr.h"
 #include "ccore/hdrs.h"
 #include "ccore/map.h"
 #include "ccore/vec.h"
 #include "ccore/str.h"
+#include "ccore/buf.h"
+#include "ccore/ascii.h"
 #include "ccore/xmem.h"
 
 typedef enum T {

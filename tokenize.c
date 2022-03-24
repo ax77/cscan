@@ -1,26 +1,3 @@
-#include <assert.h>
-#include <ctype.h>
-#include <limits.h>
-#include <stdarg.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-
-#include <sys/stat.h>
-#include <sys/errno.h>
-#include <sys/ioctl.h>
-#include <unistd.h>
-#include <fcntl.h>
-
-#include "ccore/vec.h"
-#include "ccore/map.h"
-#include "ccore/str.h"
-#include "ccore/buf.h"
-#include "ccore/fdesc.h"
-#include "ccore/ascii.h"
 #include "drcc.h"
 
 typedef struct Context {
@@ -47,20 +24,6 @@ Context *make_context(char *filename)
 // markers
 Token WSP_TOKEN = { };
 Token EOL_TOKEN = { };
-
-static void vec_add_all(vec(token) *tokenlist, vec(token) *line)
-{
-    for (size_t i = 0; i < vec_size(line); i++) {
-        vec_push_back(tokenlist, vec_get(line, i));
-    }
-}
-
-static void vec_reset(vec(token) *line)
-{
-    line->size = 0;
-    line->alloc = 0;
-    line->data = NULL;
-}
 
 static Ident *ctx_make_ident(Context *ctx, char *name);
 static Token* parse_ident_token(Context* ctx);
@@ -359,9 +322,10 @@ void tokenize_context(Context *ctx)
             last->fposition |= fnewline;
             first->fposition |= fatbol;
             first->fposition |= fleadws;
-            vec_add_all(ctx->tokenlist, &line);
 
+            vec_add_all(ctx->tokenlist, &line);
             vec_reset(&line);
+
             continue;
         }
 
