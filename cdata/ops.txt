@@ -1,4 +1,10 @@
 %:%:   @  T_SHARP_SHARP
+<:     @  T_LEFT_BRACKET
+:>     @  T_RIGHT_BRACKET
+<%     @  T_LEFT_BRACE
+%>     @  T_RIGHT_BRACE
+%:     @  T_SHARP
+
 >>=    @  T_RSHIFT_EQUAL
 <<=    @  T_LSHIFT_EQUAL
 ...    @  T_DOT_DOT_DOT
@@ -23,11 +29,6 @@
 >>     @  T_RSHIFT
 ||     @  T_OR_OR
 |=     @  T_OR_EQUAL
-<:     @  T_LEFT_BRACKET
-:>     @  T_RIGHT_BRACKET
-<%     @  T_LEFT_BRACE
-%>     @  T_RIGHT_BRACE
-%:     @  T_SHARP
 ,      @  T_COMMA
 -      @  T_MINUS
 ;      @  T_SEMI_COLON

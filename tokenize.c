@@ -272,22 +272,12 @@ Token *nex2(Context *ctx)
 
     }
 
-    if (c1 == '$') {
-        charbuf_nextc(buf);
-        char buf[] = { c1, '\0' };
-        return ctx_make_token(ctx, T_DOLLAR_SIGN, buf);
-    } else if (c1 == '@') {
-        charbuf_nextc(buf);
-        char buf[] = { c1, '\0' };
-        return ctx_make_token(ctx, T_AT_SIGN, buf);
-    } else if (c1 == '`') {
-        charbuf_nextc(buf);
-        char buf[] = { c1, '\0' };
-        return ctx_make_token(ctx, T_GRAVE_ACCENT, buf);
-    } else if (c1 == '\\') {
-        charbuf_nextc(buf);
-        char buf[] = { c1, '\0' };
-        return ctx_make_token(ctx, T_BACKSLASH, buf);
+    char otherascii[] = { c1, '\0' };
+    void * perhaps = HashMap_get(ctx->operators, otherascii);
+    if (perhaps) {
+        charbuf_nextc(buf); // XXX
+        int *type2en = ((int*) perhaps);
+        return ctx_make_token(ctx, *type2en, otherascii);
     }
 
     charbuf_nextc(buf); // XXX

@@ -44,15 +44,10 @@ CharBuf* charbuf_new(char *from)
 int charbuf_nextc(CharBuf *b)
 {
 
-    for (;;) {
+    for (; b->offset < b->size;) {
 
         if (b->eofs >= (BUFFER_PADDING - 8)) {
             cc_fatal("Infinite loop handling...");
-        }
-
-        if (b->offset >= b->size) {
-            b->eofs++;
-            return HC_FEOF; // '\0';
         }
 
         if (b->prevc == '\n') {

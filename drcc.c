@@ -99,6 +99,12 @@ HashMap *make_ops_map()
     HashMap *m = HashMap_new_str();
 
     HashMap_put(m, "%:%:", g(T_SHARP_SHARP));
+    HashMap_put(m, "<:", g(T_LEFT_BRACKET));
+    HashMap_put(m, ":>", g(T_RIGHT_BRACKET));
+    HashMap_put(m, "<%", g(T_LEFT_BRACE));
+    HashMap_put(m, "%>", g(T_RIGHT_BRACE));
+    HashMap_put(m, "%:", g(T_SHARP));
+
     HashMap_put(m, ">>=", g(T_RSHIFT_EQUAL));
     HashMap_put(m, "<<=", g(T_LSHIFT_EQUAL));
     HashMap_put(m, "...", g(T_DOT_DOT_DOT));
@@ -123,11 +129,6 @@ HashMap *make_ops_map()
     HashMap_put(m, ">>", g(T_RSHIFT));
     HashMap_put(m, "||", g(T_OR_OR));
     HashMap_put(m, "|=", g(T_OR_EQUAL));
-    HashMap_put(m, "<:", g(T_LEFT_BRACKET));
-    HashMap_put(m, ":>", g(T_RIGHT_BRACKET));
-    HashMap_put(m, "<%", g(T_LEFT_BRACE));
-    HashMap_put(m, "%>", g(T_RIGHT_BRACE));
-    HashMap_put(m, "%:", g(T_SHARP));
     HashMap_put(m, ",", g(T_COMMA));
     HashMap_put(m, "-", g(T_MINUS));
     HashMap_put(m, ";", g(T_SEMI_COLON));
@@ -153,6 +154,10 @@ HashMap *make_ops_map()
     HashMap_put(m, ">", g(T_GT));
     HashMap_put(m, "|", g(T_OR));
     HashMap_put(m, "~", g(T_TILDE));
+    HashMap_put(m, "$", g(T_DOLLAR_SIGN));
+    HashMap_put(m, "@", g(T_AT_SIGN));
+    HashMap_put(m, "`", g(T_GRAVE_ACCENT));
+    HashMap_put(m, "\\", g(T_BACKSLASH));
 
     return m;
 }
