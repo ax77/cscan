@@ -181,6 +181,7 @@ void vec_reset_##NAME(vec_##NAME *v)                                          \
 vec_proto(char, i8)
 vec_proto(unsigned char, u8)
 vec_proto(char*, str)
+vec_proto(unsigned int, u32);
 
 #endif /* VEC3_H_ */
 

@@ -12,8 +12,7 @@
 #include "ccore/xmem.h"
 
 typedef enum T {
-    TOKEN_EOF,
-    TOKEN_ERROR,
+    TOKEN_EOF, TOKEN_ERROR,
 
     // General identifier, may be a user-defined-name, or a keyword.
     TOKEN_IDENT,
@@ -77,13 +76,30 @@ typedef enum T {
     T_BACKSLASH, // "\"
 } T;
 
+struct PpSym;
+struct Ident;
+struct Token;
+
+vec_proto(struct Token*, token);
+extern struct Token *EOF_TOKEN_ENTRY;
+
 enum string_encoding {
     // string encoding prefix
-    STR_ENC_NONE, STR_ENC_CH16_u, STR_ENC_CH32_U, STR_ENC_UTF8_u8, STR_ENC_WIDE_L,
+    STR_ENC_NONE,
+    STR_ENC_CH16_u,
+    STR_ENC_CH32_U,
+    STR_ENC_UTF8_u8,
+    STR_ENC_WIDE_L,
 };
 
 typedef struct PpSym {
     char *name;
+    vec(token) *repl;
+    vec(token) *parm;
+    vec(u32) *usage;
+    int is_hidden;
+    int is_vararg;
+    int arity;
 } PpSym;
 
 typedef struct Ident {
@@ -112,9 +128,6 @@ typedef struct Token {
 
 Token *token_new(T type, char *value);
 
-vec_proto(struct Token*, token);
-extern Token *EOF_TOKEN_ENTRY;
-
 // Token Category
 #define formal     (1u << 0u)
 #define scanned    (1u << 1u)
@@ -131,8 +144,7 @@ extern Token *EOF_TOKEN_ENTRY;
 
 HashMap *make_ops_map();
 HashMap *make_idents_map();
-
-
+char *toktype_tos(T t);
 
 // Identifiers
 

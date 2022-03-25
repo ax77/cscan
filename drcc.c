@@ -241,3 +241,60 @@ HashMap *make_idents_map()
 
     return m;
 }
+
+char *toktype_tos(T t) {
+    if(t == T_RSHIFT_EQUAL) { return ">>="; };
+    if(t == T_LSHIFT_EQUAL) { return "<<="; };
+    if(t == T_DOT_DOT_DOT) { return "..."; };
+    if(t == T_ARROW) { return "->"; };
+    if(t == T_MINUS_MINUS) { return "--"; };
+    if(t == T_MINUS_EQUAL) { return "-="; };
+    if(t == T_NE) { return "!="; };
+    if(t == T_DOT_DOT) { return ".."; };
+    if(t == T_TIMES_EQUAL) { return "*="; };
+    if(t == T_DIVIDE_EQUAL) { return "/="; };
+    if(t == T_AND_EQUAL) { return "&="; };
+    if(t == T_AND_AND) { return "&&"; };
+    if(t == T_SHARP_SHARP) { return "##"; };
+    if(t == T_PERCENT_EQUAL) { return "%="; };
+    if(t == T_XOR_EQUAL) { return "^="; };
+    if(t == T_PLUS_PLUS) { return "++"; };
+    if(t == T_PLUS_EQUAL) { return "+="; };
+    if(t == T_LE) { return "<="; };
+    if(t == T_LSHIFT) { return "<<"; };
+    if(t == T_EQ) { return "=="; };
+    if(t == T_GE) { return ">="; };
+    if(t == T_RSHIFT) { return ">>"; };
+    if(t == T_OR_OR) { return "||"; };
+    if(t == T_OR_EQUAL) { return "|="; };
+    if(t == T_COMMA) { return ","; };
+    if(t == T_MINUS) { return "-"; };
+    if(t == T_SEMI_COLON) { return ";"; };
+    if(t == T_COLON) { return ":"; };
+    if(t == T_EXCLAMATION) { return "!"; };
+    if(t == T_QUESTION) { return "?"; };
+    if(t == T_DOT) { return "."; };
+    if(t == T_LEFT_PAREN) { return "("; };
+    if(t == T_RIGHT_PAREN) { return ")"; };
+    if(t == T_LEFT_BRACKET) { return "["; };
+    if(t == T_RIGHT_BRACKET) { return "]"; };
+    if(t == T_LEFT_BRACE) { return "{"; };
+    if(t == T_RIGHT_BRACE) { return "}"; };
+    if(t == T_TIMES) { return "*"; };
+    if(t == T_DIVIDE) { return "/"; };
+    if(t == T_AND) { return "&"; };
+    if(t == T_SHARP) { return "#"; };
+    if(t == T_PERCENT) { return "%"; };
+    if(t == T_XOR) { return "^"; };
+    if(t == T_PLUS) { return "+"; };
+    if(t == T_LT) { return "<"; };
+    if(t == T_ASSIGN) { return "="; };
+    if(t == T_GT) { return ">"; };
+    if(t == T_OR) { return "|"; };
+    if(t == T_TILDE) { return "~"; };
+    if(t == T_DOLLAR_SIGN) { return "$"; };
+    if(t == T_AT_SIGN) { return "@"; };
+    if(t == T_GRAVE_ACCENT) { return "`"; };
+    if(t == T_BACKSLASH) { return "\\"; };
+    return "<unknown-token-type>";
+}
