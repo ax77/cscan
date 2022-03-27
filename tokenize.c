@@ -341,8 +341,8 @@ int main(int argc, char **argv)
 
     for (size_t i = 0; i < tokens->size; i++) {
         Token *t = vec_get(tokens, i);
-        printf("%3d:%3d BOL=%d LF=%d WS=%d %s\n", t->pos.line, t->pos.column, t->fposition & fatbol,
-                t->fposition & fnewline, t->fposition & fleadws, t->value);
+        printf("%3d:%3d BOL=%d LF=%d WS=%d TP=%s %s\n", t->pos.line, t->pos.column, t->fposition & fatbol,
+                t->fposition & fnewline, t->fposition & fleadws, toktype_tos(t->type), t->value);
     }
 
     printf("\n:ok:\n");
