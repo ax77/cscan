@@ -97,10 +97,10 @@ Strtox *parse_number(char *n)
     int evaltype = EVALTYPE_ERROR;
 
     // NOTE: we're dealing with reversed string
-    if (input.len > 2) {
+    if (input.size > 2) {
         // 0x12 -> 21x0
-        char c1 = sb_char_at(&input, input.len - 1); // 0
-        char c2 = sb_char_at(&input, input.len - 2); // x
+        char c1 = sb_char_at(&input, input.size - 1); // 0
+        char c2 = sb_char_at(&input, input.size - 2); // x
         if (c1 == '0' && (c2 == 'b' || c2 == 'B')) {
             evaltype = INTEGER_2;
             isBin = 1;
@@ -117,10 +117,10 @@ Strtox *parse_number(char *n)
     }
 
     // a corner cases for c-like octals
-    if (input.len >= 2) {
+    if (input.size >= 2) {
         // 07 -> 70
-        char c1 = sb_char_at(&input, input.len - 1); // 0
-        char c2 = sb_char_at(&input, input.len - 2); // 7
+        char c1 = sb_char_at(&input, input.size - 1); // 0
+        char c2 = sb_char_at(&input, input.size - 2); // 7
         if (c1 == '0' && is_oct(c2)) {
             evaltype = INTEGER_8;
             isOct = 1;
@@ -152,7 +152,7 @@ Strtox *parse_number(char *n)
         if (isHex) {
             cut_for_base(&input, &dec, 16);
             exp_sign = cut_mnt_exp(&input, &mnt, &exp, 16);
-            if (mnt.len || exp.len) {
+            if (mnt.size || exp.size) {
                 evaltype = FLOATING_16;
             }
         }
@@ -166,7 +166,7 @@ Strtox *parse_number(char *n)
         // c-like floating constant in a form '.77f'
         if (sb_peek_last(&input) == '.') {
             exp_sign = cut_mnt_exp(&input, &mnt, &exp, 10);
-            if (mnt.len || exp.len) {
+            if (mnt.size || exp.size) {
                 evaltype = FLOATING_10;
             }
         }
@@ -181,7 +181,7 @@ Strtox *parse_number(char *n)
 
             cut_for_base(&input, &dec, 10);
             exp_sign = cut_mnt_exp(&input, &mnt, &exp, 10);
-            if (mnt.len || exp.len) {
+            if (mnt.size || exp.size) {
                 evaltype = FLOATING_10;
             }
         }

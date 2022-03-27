@@ -91,12 +91,6 @@ void internal_free(void **ptr, const char *file, int line)
         return;
     }
 
-    // If we unwrap a buffer that was empty, and then trying to free the content
-    // of a stack data.
-    if ((*ptr) == EMPTY_STRBUF_STR) {
-        return;
-    }
-
     // Slight check whether the pointer is a valid address.
     if ((*ptr) < XMEM_MIN_ADDRESS || (*ptr) > XMEM_MAX_ADDRESS) {
         cc_fatal(

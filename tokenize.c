@@ -72,8 +72,8 @@ static Token* parse_ident_token(Context* ctx)
         sb_addc(&sb, (char) charbuf_nextc(buf));
     }
 
-    assert(sb.len);
-    char* buffer = sb.buf;
+    assert(sb.size);
+    char* buffer = sb.data;
 
     Token* tok = ctx_make_token(ctx, TOKEN_IDENT, buffer);
     tok->ident = ctx_make_ident(ctx, buffer);
@@ -115,7 +115,7 @@ static Token *parse_string_token(Context *ctx, enum string_encoding enc)
     // TODO: escape the buffer here, and set escaped content to the token
 
     sb_addc(&sb, endof);
-    return ctx_make_token(ctx, typeoftok, sb.buf);
+    return ctx_make_token(ctx, typeoftok, sb.data);
 }
 
 Token *nex2(Context *ctx)
@@ -217,7 +217,7 @@ Token *nex2(Context *ctx)
 
             break;
         }
-        return ctx_make_token(ctx, TOKEN_NUMBER, strbuf.buf);
+        return ctx_make_token(ctx, TOKEN_NUMBER, strbuf.data);
     }
 
     if (is_op_start(c1)) {

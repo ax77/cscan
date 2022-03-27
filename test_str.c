@@ -6,7 +6,7 @@
 void test_str_0() {
     Str s = STR_INIT;
     size_t res = sb_adds(&s, "1");
-    assert_true(strequal("1", s.buf));
+    assert_true(strequal("1", s.data));
     assert_true(res == 1);
 }
 

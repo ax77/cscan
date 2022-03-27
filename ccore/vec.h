@@ -183,5 +183,7 @@ vec_proto(unsigned char, u8)
 vec_proto(char*, str)
 vec_proto(unsigned int, u32);
 
+typedef vec(i8) Str;
+
 #endif /* VEC3_H_ */
 

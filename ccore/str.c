@@ -2,80 +2,14 @@
 #include "xmem.h"
 #include "ascii.h"
 
-char EMPTY_STRBUF_STR[1];
-
-static void sb_check_allocated(Str *s)
-{
-    assert(s);
-    assert(s->buf);
-    assert(s->buf != EMPTY_STRBUF_STR);
-    assert(s->alloc > 0);
-}
-
 void sb_reset(Str *s)
 {
-    assert(s);
-    assert(s->buf);
-    s->buf = EMPTY_STRBUF_STR;
-    s->len = 0;
-    s->alloc = 0;
-}
-
-static size_t sb_grow(Str *s, size_t extra)
-{
-    assert(s);
-    assert(s->buf);
-    assert(extra);
-    assert(extra < 3); // grow for extra 1 or 2 elements
-
-    // Two cases: whether the buf is set as default global varible
-    // or alloc is set to zero. It means that the buffer is used as
-    // a value, not a pointer. We should support the correct allocation
-    // at the first time the buffer is used.
-    if (s->buf == EMPTY_STRBUF_STR) {
-        assert(s->len == 0);
-        assert(s->alloc == 0);
-        s->alloc = 8;
-        s->buf = cc_malloc(s->alloc * sizeof(char));
-        return s->alloc;
-    }
-    if (s->alloc == 0) {
-        assert(s->len == 0);
-        assert(s->buf == EMPTY_STRBUF_STR);
-        s->alloc = 8;
-        s->buf = cc_malloc(s->alloc * sizeof(char));
-        return s->alloc;
-    }
-
-    // must be allocated here.
-    sb_check_allocated(s);
-
-    // And here we'll check whether the allocated size
-    // suits for the data we have, with adding a little
-    // extra we need to append to the buffer.
-    if ((s->len + extra) >= s->alloc) {
-        s->alloc += 2;
-        s->alloc *= 2;
-        s->buf = cc_realloc(s->buf, s->alloc * sizeof(char));
-    }
-
-    return s->alloc;
+    vec_reset(s);
 }
 
 int sb_addc(Str *s, char c)
 {
-    assert(s);
-    assert(s->buf);
-
-    if (!c) {
-        return 0;
-    }
-
-    sb_grow(s, 2);
-
-    s->buf[s->len++] = c;
-    s->buf[s->len] = '\0';
-
+    vec_push_back(s, c);
     return 1;
 }
 
@@ -94,12 +28,7 @@ size_t sb_adds(Str *s, char *news)
 
 Str* sb_new()
 {
-    Str *rv = cc_malloc(sizeof(Str));
-    rv->len = 0;
-    rv->alloc = 8;
-    rv->buf = cc_malloc(rv->alloc * sizeof(char));
-    rv->buf[rv->len] = '\0';
-    return rv;
+    return vec_new(i8);
 }
 
 Str* sb_news(char *str)
@@ -130,8 +59,7 @@ char* sb_left(char *from, size_t much)
         sb_addc(&res, from[i]);
     }
 
-    sb_check_allocated(&res);
-    return res.buf;
+    return sb_buf_or_empty(&res);
 }
 
 char* sb_right(char *from, size_t much)
@@ -158,8 +86,7 @@ char* sb_right(char *from, size_t much)
         sb_addc(&res, from[i]);
     }
 
-    sb_check_allocated(&res);
-    return res.buf;
+    return sb_buf_or_empty(&res);
 }
 
 char* sb_mid(char *from, size_t begin, size_t much)
@@ -185,8 +112,7 @@ char* sb_mid(char *from, size_t begin, size_t much)
         sb_addc(&res, from[i]);
     }
 
-    sb_check_allocated(&res);
-    return res.buf;
+    return sb_buf_or_empty(&res);
 }
 
 char* sb_trim(char *from)
@@ -220,8 +146,7 @@ char* sb_trim(char *from)
         sb_addc(&res, from[i]);
     }
 
-    sb_check_allocated(&res);
-    return res.buf;
+    return sb_buf_or_empty(&res);
 }
 
 static bool next_is(char *input, char *pattern, size_t input_len,
@@ -270,8 +195,7 @@ char* sb_replace(char *input, char *pattern, char *replacement)
         }
     }
 
-    sb_check_allocated(&sb);
-    return sb.buf;
+    return sb_buf_or_empty(&sb);
 }
 
 char* normalize_slashes(char *s)
@@ -303,8 +227,7 @@ char* normalize_slashes(char *s)
         p = c;
     }
 
-    sb_check_allocated(&sb);
-    return sb.buf;
+    return sb_buf_or_empty(&sb);
 }
 
 int is_abs_win(char *s)
@@ -379,10 +302,10 @@ int strequal(void *a, void *b)
 
 char* sb_buf_or_empty(Str *sb)
 {
-    if (sb->len == 0) {
+    if (sb->size == 0) {
         return cc_strdup("");
     }
-    return sb->buf;
+    return sb->data;
 }
 
 vec(str)* sb_split_char(char *where, char sep, int include_empty)
@@ -400,7 +323,7 @@ vec(str)* sb_split_char(char *where, char sep, int include_empty)
     for (size_t i = 0; i < len && where[i]; i++) {
         char c = where[i];
         if (c == sep) {
-            if (sb.len > 0 || (sb.len == 0 && include_empty)) {
+            if (sb.size > 0 || (sb.size == 0 && include_empty)) {
                 vec_push_back(lines, sb_buf_or_empty(&sb));
             }
             sb_reset(&sb);
@@ -409,7 +332,7 @@ vec(str)* sb_split_char(char *where, char sep, int include_empty)
         sb_addc(&sb, c);
     }
 
-    if (sb.len > 0 || (sb.len == 0 && include_empty)) {
+    if (sb.size > 0 || (sb.size == 0 && include_empty)) {
         vec_push_back(lines, sb_buf_or_empty(&sb));
     }
     return lines;
@@ -428,13 +351,13 @@ char* normalize(char *given)
 
     for (size_t i = 0; i < splitten->size; i++) {
         Str *part = sb_news(vec_get(splitten, i));
-        if (part->len == 0) {
+        if (part->size == 0) {
             continue;
         }
-        if (part->len == 1 && part->buf[0] == '.') {
+        if (part->size == 1 && part->data[0] == '.') {
             continue;
         }
-        if (strequal(part->buf, "..")) {
+        if (strequal(part->data, "..")) {
             if (worklist.size != 0) {
                 size_t lastidx = worklist.size - 1;
                 char *last = vec_get(&worklist, lastidx);
@@ -448,7 +371,7 @@ char* normalize(char *given)
         if (i < (splitten->size - 1)) {
             sb_addc(part, '/');
         }
-        vec_push_back(&worklist, cc_strdup(part->buf));
+        vec_push_back(&worklist, cc_strdup(part->data));
     }
 
     Str sb = STR_INIT;
@@ -462,12 +385,7 @@ char* normalize(char *given)
 
 int sb_pop(Str *buf)
 {
-    assert(buf);
-    assert(buf->len);
-    char c = buf->buf[buf->len - 1];
-    buf->len--;
-    buf->buf[buf->len] = '\0';
-    return c;
+    return vec_pop_back(buf);
 }
 
 int sb_adds_rev(Str *buf, char *input)
@@ -491,23 +409,16 @@ int sb_adds_rev(Str *buf, char *input)
 
 int sb_char_at(Str *buf, size_t index)
 {
-    assert(buf);
-    assert(buf->buf);
-    assert(buf->len);
-    assert(index < buf->len);
-    return buf->buf[index];
+    return vec_get(buf, index);
 }
 
 int sb_is_empty(Str *buf)
 {
-    assert(buf);
-    return buf->len == 0;
+    return vec_is_empty(buf);
 }
 
 int sb_peek_last(Str *buf)
 {
-    assert(buf);
-    assert(buf->len);
-    return buf->buf[buf->len - 1];
+    return vec_get(buf, buf->size - 1);
 }
 
