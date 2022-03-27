@@ -14,6 +14,28 @@
 #define kw(n)
 #endif
 
+#ifndef prepr
+#define prepr(op, en)
+#endif
+
+prepr("<placemarker>", T_SPEC_PLACEMARKER)
+prepr("<unhide>", T_SPEC_UNHIDE)
+prepr("#\n", PT_HEOL)
+prepr("#include", PT_HINCLUDE)
+prepr("#define", PT_HDEFINE)
+prepr("#undef", PT_HUNDEF)
+prepr("#if", PT_HIF)
+prepr("#ifdef", PT_HIFDEF)
+prepr("#ifndef", PT_HIFNDEF)
+prepr("#endif", PT_HENDIF)
+prepr("#else", PT_HELSE)
+prepr("#elif", PT_HELIF)
+prepr("#line", PT_HLINE)
+prepr("#error", PT_HERROR)
+prepr("#pragma", PT_HPRAGMA)
+prepr("#warning", PT_HWARNING)
+prepr("#include_next", PT_HINCLUDE_NEXT)
+
 op_spec("EOF", TOKEN_EOF     )
 op_spec("ERR", TOKEN_ERROR   )
 op_spec("IDN", TOKEN_IDENT   )
@@ -164,4 +186,5 @@ kw(__extension__      )
 #undef op_digr
 #undef kw
 #undef op_spec
+#undef prepr
 

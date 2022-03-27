@@ -16,6 +16,7 @@
 typedef enum T {
 #   define op_spec(op, en) en,
 #   define op(op, en) en,
+#   define prepr(op, en) en,
 #   include "ops"
 } T;
 
@@ -70,6 +71,7 @@ typedef struct Token {
 } Token;
 
 Token *token_new(T type, char *value);
+Token *token_copy(Token *another);
 
 // Token Category
 #define formal     (1u << 0u)

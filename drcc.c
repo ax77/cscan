@@ -12,6 +12,13 @@ Token *token_new(T type, char *value)
     return t;
 }
 
+Token *token_copy(Token *another)
+{
+    Token *t = cc_malloc(sizeof(struct Token));
+    *t = *another;
+    return t;
+}
+
 // Builtin-names
 //
 
@@ -50,6 +57,7 @@ char *toktype_tos(T t) {
 
 #   define op_spec(op, en) if(t == en) { return op; };
 #   define op(op, en) if(t == en) { return op; };
+#   define prepr(op, en) if(t == en) { return op; };
 #   include "ops"
 
     return "<unknown-token-type>";

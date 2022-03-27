@@ -8,7 +8,7 @@ typedef struct Context {
     vec(token) *tokenlist;
 } Context;
 
-Context *make_context(char *filename)
+Context* make_context(char *filename)
 {
     assert(filename);
 
@@ -22,14 +22,14 @@ Context *make_context(char *filename)
 }
 
 // markers
-Token WSP_TOKEN = { };
-Token EOL_TOKEN = { };
+static Token WSP_TOKEN = { };
+static Token EOL_TOKEN = { };
 
-static Ident *ctx_make_ident(Context *ctx, char *name);
-static Token* parse_ident_token(Context* ctx);
-static Token *ctx_make_token(Context *ctx, T type, char *value);
+static Ident* ctx_make_ident(Context *ctx, char *name);
+static Token* parse_ident_token(Context *ctx);
+static Token* ctx_make_token(Context *ctx, T type, char *value);
 
-static Ident *ctx_make_ident(Context *ctx, char *name)
+static Ident* ctx_make_ident(Context *ctx, char *name)
 {
     Ident *id = HashMap_get(ctx->ident_hash, name);
     if (id) {
@@ -41,7 +41,7 @@ static Ident *ctx_make_ident(Context *ctx, char *name)
     return newid;
 }
 
-static Token *ctx_make_token(Context *ctx, T type, char *value)
+static Token* ctx_make_token(Context *ctx, T type, char *value)
 {
     assert(value);
 
@@ -56,9 +56,9 @@ static Token *ctx_make_token(Context *ctx, T type, char *value)
     return token;
 }
 
-static Token* parse_ident_token(Context* ctx)
+static Token* parse_ident_token(Context *ctx)
 {
-    CharBuf* buf = ctx->buffer;
+    CharBuf *buf = ctx->buffer;
 
     Str sb = STR_INIT;
     sb_addc(&sb, (char) charbuf_nextc(buf));
@@ -73,15 +73,15 @@ static Token* parse_ident_token(Context* ctx)
     }
 
     assert(sb.size);
-    char* buffer = sb.data;
+    char *buffer = sb.data;
 
-    Token* tok = ctx_make_token(ctx, TOKEN_IDENT, buffer);
+    Token *tok = ctx_make_token(ctx, TOKEN_IDENT, buffer);
     tok->ident = ctx_make_ident(ctx, buffer);
 
     return tok;
 }
 
-static Token *parse_string_token(Context *ctx, enum string_encoding enc)
+static Token* parse_string_token(Context *ctx, enum string_encoding enc)
 {
     CharBuf *buffer = ctx->buffer;
     assert(buffer);
@@ -118,7 +118,7 @@ static Token *parse_string_token(Context *ctx, enum string_encoding enc)
     return ctx_make_token(ctx, typeoftok, sb.data);
 }
 
-Token *nex2(Context *ctx)
+Token* nex2(Context *ctx)
 {
     CharBuf *buf = ctx->buffer;
     int *chars = charbuf_next4(buf);
@@ -202,7 +202,8 @@ Token *nex2(Context *ctx)
             if (is_dec(peek)) {
                 sb_addc(&strbuf, charbuf_nextc(buf));
                 continue;
-            } else if (peek == 'e' || peek == 'E' || peek == 'p' || peek == 'P') {
+            } else if (peek == 'e' || peek == 'E' || peek == 'p'
+                    || peek == 'P') {
                 sb_addc(&strbuf, charbuf_nextc(buf));
 
                 peek = charbuf_peekc(buf);
@@ -226,10 +227,10 @@ Token *nex2(Context *ctx)
         char buf2[] = { c1, c2, '\0' };
         char buf1[] = { c1, '\0' };
 
-        void * type4 = HashMap_get(ctx->operators, buf4);
-        void * type3 = HashMap_get(ctx->operators, buf3);
-        void * type2 = HashMap_get(ctx->operators, buf2);
-        void * type1 = HashMap_get(ctx->operators, buf1);
+        void *type4 = HashMap_get(ctx->operators, buf4);
+        void *type3 = HashMap_get(ctx->operators, buf3);
+        void *type2 = HashMap_get(ctx->operators, buf2);
+        void *type1 = HashMap_get(ctx->operators, buf1);
 
         if (type4 != NULL) {
             charbuf_nextc(buf);
@@ -267,13 +268,13 @@ Token *nex2(Context *ctx)
 
     if (is_letter(c1)) {
 
-        Token* tok = parse_ident_token(ctx);
+        Token *tok = parse_ident_token(ctx);
         return tok;
 
     }
 
     char otherascii[] = { c1, '\0' };
-    void * perhaps = HashMap_get(ctx->operators, otherascii);
+    void *perhaps = HashMap_get(ctx->operators, otherascii);
     if (perhaps) {
         charbuf_nextc(buf); // XXX
         int *type2en = ((int*) perhaps);
@@ -328,10 +329,68 @@ void tokenize_context(Context *ctx)
     }
 }
 
-vec(token) *tokenize(Context *ctx)
+vec(token)* tokenize(Context *ctx)
 {
     tokenize_context(ctx);
     return ctx->tokenlist;
+}
+
+typedef struct Scan {
+    vec(token) *tokens;
+    vec(token) *rescan;
+} Scan;
+
+Scan *scan_new(vec(token) *tokens) {
+    Scan *s = cc_malloc(sizeof(Scan));
+    s->tokens = tokens;
+    s->rescan = vec_new(token);
+    return s;
+}
+
+vec(token)* paste_all(Token *head, vec(token) *repl);
+
+void replace_simple(Scan *s, Token *head, PpSym *macros) {
+    assert(!macros->is_hidden);
+    macros->is_hidden = 1;
+
+    vec(token) *res = paste_all(head, macros->repl);
+    for(ptrdiff_t j = vec_size(res); --j >= 0; ) {
+        Token *tok = vec_get(res, j);
+        if(tok->type == T_SPEC_PLACEMARKER) {
+            continue;
+        }
+        vec_push_back(s->rescan, tok);
+    }
+}
+
+vec(token)* paste_all(Token *head, vec(token) *repl)
+{
+    vec(token) *rv = vec_new(token);
+
+    for (size_t i = 0; i < vec_size(repl); i++) {
+        Token *ntok = token_copy(vec_get(repl, i));
+        vec_push_back(rv, ntok);
+    }
+
+    return rv;
+}
+
+int unhide(Token *u)
+{
+    if (u->type == T_SPEC_UNHIDE) {
+        assert(u->ident->sym->is_hidden);
+        u->ident->sym->is_hidden = 0;
+        return 1;
+    }
+    return 0;
+}
+
+int scan_is_empty(Scan *s) {
+    return 0;
+}
+
+Token *scan_get(Scan *s) {
+    return NULL;
 }
 
 int main(int argc, char **argv)
@@ -341,8 +400,9 @@ int main(int argc, char **argv)
 
     for (size_t i = 0; i < tokens->size; i++) {
         Token *t = vec_get(tokens, i);
-        printf("%3d:%3d BOL=%d LF=%d WS=%d TP=%s %s\n", t->pos.line, t->pos.column, t->fposition & fatbol,
-                t->fposition & fnewline, t->fposition & fleadws, toktype_tos(t->type), t->value);
+        printf("%3d:%3d BOL=%d LF=%d WS=%d TP=%s %s\n", t->pos.line,
+                t->pos.column, t->fposition & fatbol, t->fposition & fnewline,
+                t->fposition & fleadws, toktype_tos(t->type), t->value);
     }
 
     printf("\n:ok:\n");
