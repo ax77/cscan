@@ -228,6 +228,12 @@ vec_contains_##NAME(vec_##NAME *v, TYPE elem, int (*cmp)(TYPE, TYPE))         \
 #define vec_index_of(container, elem, cmp) (container)->functions->index_of(container, elem, cmp)
 #define vec_contains(container, elem, cmp) (container)->functions->contains(container, elem, cmp)
 
+#define vec_foreach(v, elem) \
+    for( size_t i = 0; i < vec_size(v) && ((elem = vec_get(v, i)), 1u); i++ )
+
+#define vec_foreach_rev(v, elem) \
+    for( ptrdiff_t i = vec_size(v); (--i >= 0) && ((elem = vec_get(v, i)), 1u); )
+
 vec_proto(char, i8)
 vec_proto(unsigned char, u8)
 vec_proto(char*, str)

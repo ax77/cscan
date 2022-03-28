@@ -412,8 +412,10 @@ void replace_simple(Scan *s, Token *head, PpSym *macros)
     macros->is_hidden = 1;
 
     vec(token) *res = paste_all(head, macros->repl);
-    for (ptrdiff_t j = vec_size(res); --j >= 0;) {
-        Token *tok = vec_get(res, j);
+
+    Token *tok = NULL;
+    vec_foreach_rev(res, tok)
+    {
         if (tok->type == T_SPEC_PLACEMARKER) {
             continue;
         }
@@ -425,8 +427,10 @@ vec(token)* paste_all(Token *head, vec(token) *repl)
 {
     vec(token) *rv = vec_new(token);
 
-    for (size_t i = 0; i < vec_size(repl); i++) {
-        Token *ntok = token_copy(vec_get(repl, i));
+    Token *tok = NULL;
+    vec_foreach(repl, tok)
+    {
+        Token *ntok = token_copy(tok);
         vec_push_back(rv, ntok);
     }
 
@@ -451,11 +455,12 @@ int is_ppdirtype(T tp)
     return 0;
 }
 
-vec(token) *scan_cut_line(Scan *s) {
+vec(token)* scan_cut_line(Scan *s)
+{
     vec(token) *rv = vec_new(token);
-    while(!scan_is_empty(s)) {
+    while (!scan_is_empty(s)) {
         Token *t = scan_pop_noppdirective(s);
-        if((t->fposition & fnewline) || t->type == TOKEN_EOF) {
+        if ((t->fposition & fnewline) || t->type == TOKEN_EOF) {
             vec_push_back(rv, t);
             break;
         }
@@ -464,8 +469,9 @@ vec(token) *scan_cut_line(Scan *s) {
     return rv;
 }
 
-int dline(Scan *s, Token *t) {
-    if(t->type == PT_HDEFINE) {
+int dline(Scan *s, Token *t)
+{
+    if (t->type == PT_HDEFINE) {
         Token *name = scan_pop_noppdirective(s);
         assert(name->type == TOKEN_IDENT);
 
@@ -528,8 +534,6 @@ int main(int argc, char **argv)
             printf("%s", "\n");
         }
     }
-
-    test_vec3();
 
     printf("\n:ok:\n");
     return 0;
