@@ -37,7 +37,7 @@ enum string_encoding {
 };
 
 typedef struct PpSym {
-    char *name;
+    struct Token *macid; // position, name, debugging
     vec(token) *repl;
     vec(token) *parm;
     vec(u32) *usage;
@@ -58,6 +58,7 @@ typedef struct Token {
     unsigned int fcategory;
     unsigned int fposition;
     int argnum;
+    int noexpand;
     Ident *ident;
     struct {
         char *filename;
@@ -70,8 +71,9 @@ typedef struct Token {
     } str;
 } Token;
 
-Token *token_new(T type, char *value);
-Token *token_copy(Token *another);
+Token* token_new(T type, char *value);
+Token* token_copy(Token *another);
+PpSym* sym_new(Token *macid, vec(token) *repl);
 
 // Token Category
 #define formal     (1u << 0u)
@@ -87,9 +89,9 @@ Token *token_copy(Token *another);
 #define fatbol     (1u << 2u)
 #define fpainted   (1u << 3u)
 
-HashMap *make_ops_map();
-HashMap *make_idents_map();
-char *toktype_tos(T t);
+HashMap* make_ops_map();
+HashMap* make_idents_map();
+char* toktype_tos(T t);
 
 // Identifiers
 

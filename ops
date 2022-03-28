@@ -180,6 +180,18 @@ kw(__volatile__       )
 kw(__label__          )                                                               
 kw(__extension__      )                                                                   
 
+kw( include        )
+kw( define         )
+kw( undef          )
+kw( ifdef          )
+kw( ifndef         )
+kw( endif          )
+kw( elif           )
+kw( line           )
+kw( error          )
+kw( pragma         )
+kw( warning        )
+kw( include_next   )
 
 
 #undef op

@@ -338,25 +338,82 @@ vec(token)* tokenize(Context *ctx)
 typedef struct Scan {
     vec(token) *tokens;
     vec(token) *rescan;
+    size_t size, offset;
 } Scan;
 
-Scan *scan_new(vec(token) *tokens) {
+Scan* scan_new(vec(token) *tokens)
+{
     Scan *s = cc_malloc(sizeof(Scan));
     s->tokens = tokens;
     s->rescan = vec_new(token);
+
+    s->size = vec_size(tokens);
+    s->offset = 0;
     return s;
+}
+
+int scan_has_tokens(Scan *s)
+{
+    return s->offset < s->size;
+}
+
+int scan_is_empty(Scan *s)
+{
+    if (scan_has_tokens(s)) {
+        return 0;
+    }
+    if (!vec_is_empty(s->rescan)) {
+        return 0;
+    }
+    return 1;
+}
+
+Token* scan_pop_noppdirective(Scan *s)
+{
+    if (!vec_is_empty(s->rescan)) {
+        return vec_pop_back(s->rescan);
+    }
+    if (s->offset >= s->size) {
+        return EOF_TOKEN_ENTRY;
+    }
+    Token *t = vec_get(s->tokens, s->offset);
+    s->offset += 1;
+    return t;
+}
+
+Token* scan_pop(Scan *s)
+{
+    Token *t = scan_pop_noppdirective(s);
+    if (t->type == T_SHARP && (t->fposition & fatbol)) {
+        if (t->fposition & fnewline) {
+            t->type = PT_HEOL;
+            return t;
+        }
+        Token *pp = scan_pop_noppdirective(s);
+        assert(pp->type == TOKEN_IDENT);
+
+        Ident *directive = pp->ident;
+        if (directive == define_ident) {
+            pp->type = PT_HDEFINE;
+        } else {
+            assert(0 && "todo!");
+        }
+        return pp;
+    }
+    return t;
 }
 
 vec(token)* paste_all(Token *head, vec(token) *repl);
 
-void replace_simple(Scan *s, Token *head, PpSym *macros) {
+void replace_simple(Scan *s, Token *head, PpSym *macros)
+{
     assert(!macros->is_hidden);
     macros->is_hidden = 1;
 
     vec(token) *res = paste_all(head, macros->repl);
-    for(ptrdiff_t j = vec_size(res); --j >= 0; ) {
+    for (ptrdiff_t j = vec_size(res); --j >= 0;) {
         Token *tok = vec_get(res, j);
-        if(tok->type == T_SPEC_PLACEMARKER) {
+        if (tok->type == T_SPEC_PLACEMARKER) {
             continue;
         }
         vec_push_back(s->rescan, tok);
@@ -385,24 +442,91 @@ int unhide(Token *u)
     return 0;
 }
 
-int scan_is_empty(Scan *s) {
+int is_ppdirtype(T tp)
+{
+    return tp == PT_HINCLUDE || tp == PT_HDEFINE || tp == PT_HUNDEF
+            || tp == PT_HIF || tp == PT_HIFDEF || tp == PT_HIFNDEF
+            || tp == PT_HENDIF || tp == PT_HELSE || tp == PT_HELIF
+            || tp == PT_HLINE || tp == PT_HERROR || tp == PT_HPRAGMA
+            || tp == PT_HWARNING || tp == PT_HINCLUDE_NEXT;
+}
+
+vec(token) *scan_cut_line(Scan *s) {
+    vec(token) *rv = vec_new(token);
+    while(!scan_is_empty(s)) {
+        Token *t = scan_pop_noppdirective(s);
+        if((t->fposition & fnewline) || t->type == TOKEN_EOF) {
+            vec_push_back(rv, t);
+            break;
+        }
+        vec_push_back(rv, t);
+    }
+    return rv;
+}
+
+int dline(Scan *s, Token *t) {
+    if(t->type == PT_HDEFINE) {
+        Token *name = scan_pop_noppdirective(s);
+        assert(name->type == TOKEN_IDENT);
+
+        vec(token) *repl = scan_cut_line(s);
+        PpSym *m = sym_new(name, repl);
+        name->ident->sym = m;
+        return 1;
+    }
     return 0;
 }
 
-Token *scan_get(Scan *s) {
-    return NULL;
+Token* scan_get(Scan *s)
+{
+    restart: while (!scan_is_empty(s)) {
+        Token *t = scan_pop(s);
+        if (is_ppdirtype(t->type)) {
+            assert(dline(s, t));
+            continue;
+        }
+        if (unhide(t)) {
+            continue;
+        }
+        if (t->type != TOKEN_IDENT) {
+            return t;
+        }
+        if (t->noexpand) {
+            return t;
+        }
+        PpSym *macros = t->ident->sym;
+        if (macros == NULL) {
+            return t;
+        }
+        if (macros->is_hidden) {
+            Token *noexpand = token_copy(t);
+            noexpand->noexpand = 1;
+            return noexpand;
+        }
+        replace_simple(s, t, macros);
+        goto restart;
+
+    }
+    return EOF_TOKEN_ENTRY;
 }
 
 int main(int argc, char **argv)
 {
     Context *ctx = make_context("input.txt");
     vec(token) *tokens = tokenize(ctx);
-
-    for (size_t i = 0; i < tokens->size; i++) {
-        Token *t = vec_get(tokens, i);
-        printf("%3d:%3d BOL=%d LF=%d WS=%d TP=%s %s\n", t->pos.line,
-                t->pos.column, t->fposition & fatbol, t->fposition & fnewline,
-                t->fposition & fleadws, toktype_tos(t->type), t->value);
+    Scan *s = scan_new(tokens);
+    for (;;) {
+        Token *t = scan_get(s);
+        if (t->type == TOKEN_EOF) {
+            break;
+        }
+        if (t->fposition & fleadws) {
+            printf("%s", " ");
+        }
+        printf("%s", t->value);
+        if (t->fposition & fnewline) {
+            printf("%s", "\n");
+        }
     }
 
     printf("\n:ok:\n");
