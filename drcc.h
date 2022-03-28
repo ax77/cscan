@@ -89,13 +89,22 @@ PpSym* sym_new(Token *macid, vec(token) *repl);
 #define fatbol     (1u << 2u)
 #define fpainted   (1u << 3u)
 
+#define NS_IDN (0u)
+#define NS_C89 (1u << 1u)
+#define NS_C99 (1u << 2u)
+#define NS_C11 (1u << 3u)
+#define NS_C2X (1u << 4u)
+#define NS_RID (1u << 5u)
+#define NS_GNU (1u << 6u)
+#define NS_CPP (NS_IDN)
+
 HashMap* make_ops_map();
 HashMap* make_idents_map();
 char* toktype_tos(T t);
 
 // Identifiers
 
-#define kw(n) extern Ident * n##_ident;
+#define kw(n, namespc) extern Ident * n##_ident;
 #include "ops"
 
 #endif /* DRCC_H_ */

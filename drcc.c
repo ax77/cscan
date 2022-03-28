@@ -37,7 +37,7 @@ PpSym* sym_new(Token *macid, vec(token) *repl)
 // Builtin-names
 //
 
-#define kw(n) Ident * n##_ident = &(Ident) { .name = STR(n), .ns = 0, .sym = NULL };
+#define kw(n, namespc) Ident * n##_ident = &(Ident) { .name = STR(n), .ns = namespc, .sym = NULL };
 #include "ops"
 
 static int* g(int en)
@@ -62,7 +62,7 @@ HashMap* make_idents_map()
 {
     HashMap *m = HashMap_new_str();
 
-#   define kw(n) HashMap_put(m, STR(n), n##_ident);
+#   define kw(n, namespc) HashMap_put(m, STR(n), n##_ident);
 #   include "ops"
 
     return m;
