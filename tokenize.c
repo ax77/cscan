@@ -1,4 +1,5 @@
 #include "drcc.h"
+#include "tests.h"
 
 typedef struct Context {
     char *filename;
@@ -527,6 +528,8 @@ int main(int argc, char **argv)
             printf("%s", "\n");
         }
     }
+
+    test_vec3();
 
     printf("\n:ok:\n");
     return 0;

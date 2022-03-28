@@ -22,5 +22,6 @@ void test_realloc_in_place();
 void test_vec0();
 void test_vec1();
 void test_vec2();
+void test_vec3();
 
 #endif /* TESTS_H_ */

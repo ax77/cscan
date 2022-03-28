@@ -37,3 +37,20 @@ void test_vec2()
     assert_true(vec_get(&buf, 0) == '!');
     assert_true(vec_get(&buf, buf.size-1) == '~');
 }
+
+static int xxx_streq(char *a, char *b)
+{
+    return strcmp(a, b) == 0;
+}
+
+void test_vec3() {
+    vec(str) v = VEC_INIT(str);
+    vec_push_back(&v, "1");
+    vec_push_back(&v, "2");
+    vec_push_back(&v, "3");
+
+    assert_true(vec_index_of(&v, "1", xxx_streq) == 0);
+    assert_true(vec_index_of(&v, "2", xxx_streq) == 1);
+    assert_true(vec_index_of(&v, "3", xxx_streq) == 2);
+    assert_true(vec_index_of(&v, " ", xxx_streq) == -1);
+}

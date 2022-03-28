@@ -37,6 +37,12 @@ int          vec_is_empty_  ##NAME   (vec_##NAME *v);                         \
 void         vec_add_all_   ##NAME   (vec_##NAME *dst, vec_##NAME *src);      \
 void         vec_reset_     ##NAME   (vec_##NAME *v);                         \
                                                                               \
+ptrdiff_t                                                                     \
+vec_index_of_##NAME(vec_##NAME *v, TYPE elem, int (*cmp)(TYPE, TYPE));        \
+                                                                              \
+int                                                                           \
+vec_contains_##NAME(vec_##NAME *v, TYPE elem, int (*cmp)(TYPE, TYPE));        \
+                                                                              \
 struct vec_functions_##NAME {                                                 \
     void   (*push_back) (vec_##NAME *v, TYPE p);                              \
     TYPE   (*pop_back)  (vec_##NAME *v);                                      \
@@ -46,6 +52,12 @@ struct vec_functions_##NAME {                                                 \
     int    (*is_empty)  (vec_##NAME *v);                                      \
     void   (*add_all)   (vec_##NAME *dst, vec_##NAME *src);                   \
     void   (*reset)     (vec_##NAME *v);                                      \
+                                                                              \
+    ptrdiff_t                                                                 \
+    (*index_of)(vec_##NAME *v, TYPE elem, int (*cmp)(TYPE, TYPE));            \
+                                                                              \
+    int                                                                       \
+    (*contains)(vec_##NAME *v, TYPE elem, int (*cmp)(TYPE, TYPE));            \
 };
 
 #define vec_impl(TYPE, NAME)                                                  \
@@ -59,6 +71,8 @@ struct vec_functions_##NAME vec_functions_impl_##NAME = {                     \
     .is_empty  = &vec_is_empty_ ##NAME,                                       \
     .add_all   = &vec_add_all_  ##NAME,                                       \
     .reset     = &vec_reset_    ##NAME,                                       \
+    .index_of  = &vec_index_of_ ##NAME,                                       \
+    .contains  = &vec_contains_ ##NAME,                                       \
 };                                                                            \
                                                                               \
 vec_##NAME* vec_new_##NAME()                                                  \
@@ -165,6 +179,40 @@ void vec_reset_##NAME(vec_##NAME *v)                                          \
     v->size = 0;                                                              \
     v->alloc = 0;                                                             \
     v->data = NULL;                                                           \
+}                                                                             \
+                                                                              \
+ptrdiff_t                                                                     \
+vec_index_of_##NAME(vec_##NAME *v, TYPE elem, int (*cmp)(TYPE, TYPE))         \
+{                                                                             \
+    assert(v);                                                                \
+    assert(cmp);                                                              \
+                                                                              \
+    if( elem == ((TYPE) 0) ) {                                                \
+        for(size_t i = 0; i < v->size; i++) {                                 \
+            assert(i < PTRDIFF_MAX);                                          \
+            if( v->data[i] == ((TYPE) 0) ) {                                  \
+                return i;                                                     \
+            }                                                                 \
+        }                                                                     \
+    } else {                                                                  \
+        for(size_t i = 0; i < v->size; i++) {                                 \
+            assert(i < PTRDIFF_MAX);                                          \
+            if(cmp(v->data[i], elem)) {                                       \
+                return i;                                                     \
+            }                                                                 \
+        }                                                                     \
+    }                                                                         \
+                                                                              \
+    return -1;                                                                \
+}                                                                             \
+                                                                              \
+int                                                                           \
+vec_contains_##NAME(vec_##NAME *v, TYPE elem, int (*cmp)(TYPE, TYPE))         \
+{                                                                             \
+    assert(v);                                                                \
+    assert(cmp);                                                              \
+                                                                              \
+    return vec_index_of_##NAME(v, elem, cmp) >= 0;                            \
 }
 
 #define vec(name) vec_##name
@@ -177,6 +225,8 @@ void vec_reset_##NAME(vec_##NAME *v)                                          \
 #define vec_is_empty(container) (container)->functions->is_empty(container)
 #define vec_add_all(container, src) (container)->functions->add_all(container, src)
 #define vec_reset(container) (container)->functions->reset(container)
+#define vec_index_of(container, elem, cmp) (container)->functions->index_of(container, elem, cmp)
+#define vec_contains(container, elem, cmp) (container)->functions->contains(container, elem, cmp)
 
 vec_proto(char, i8)
 vec_proto(unsigned char, u8)
