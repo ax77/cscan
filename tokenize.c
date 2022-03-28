@@ -444,11 +444,10 @@ int unhide(Token *u)
 
 int is_ppdirtype(T tp)
 {
-    return tp == PT_HINCLUDE || tp == PT_HDEFINE || tp == PT_HUNDEF
-            || tp == PT_HIF || tp == PT_HIFDEF || tp == PT_HIFNDEF
-            || tp == PT_HENDIF || tp == PT_HELSE || tp == PT_HELIF
-            || tp == PT_HLINE || tp == PT_HERROR || tp == PT_HPRAGMA
-            || tp == PT_HWARNING || tp == PT_HINCLUDE_NEXT;
+#   define prepr(op, en) if(tp == en) { return 1; };
+#   include "ops"
+
+    return 0;
 }
 
 vec(token) *scan_cut_line(Scan *s) {
