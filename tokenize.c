@@ -535,6 +535,8 @@ int main(int argc, char **argv)
         }
     }
 
+    test_vec4();
+
     printf("\n:ok:\n");
     return 0;
 }
