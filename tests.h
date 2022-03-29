@@ -24,5 +24,6 @@ void test_vec1();
 void test_vec2();
 void test_vec3();
 void test_vec4();
+void test_vec5();
 
 #endif /* TESTS_H_ */

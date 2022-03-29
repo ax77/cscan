@@ -37,6 +37,7 @@ int          vec_is_empty_  ##NAME   (vec_##NAME *v);                         \
 void         vec_add_all_   ##NAME   (vec_##NAME *dst, vec_##NAME *src);      \
 void         vec_reset_     ##NAME   (vec_##NAME *v);                         \
 TYPE         vec_remove_    ##NAME   (vec_##NAME *v, size_t index);           \
+void         vec_insert_    ##NAME   (vec_##NAME *v, size_t index, TYPE e);   \
                                                                               \
 ptrdiff_t                                                                     \
 vec_index_of_##NAME(vec_##NAME *v, TYPE elem, int (*cmp)(TYPE, TYPE));        \
@@ -62,6 +63,9 @@ struct vec_functions_##NAME {                                                 \
                                                                               \
     TYPE                                                                      \
     (*remove)(vec_##NAME *v, size_t index);                                   \
+                                                                              \
+    void                                                                      \
+    (*insert)(vec_##NAME *v, size_t index, TYPE e);                           \
 };
 
 #define vec_impl(TYPE, NAME)                                                  \
@@ -78,6 +82,7 @@ struct vec_functions_##NAME vec_functions_impl_##NAME = {                     \
     .index_of  = &vec_index_of_ ##NAME,                                       \
     .contains  = &vec_contains_ ##NAME,                                       \
     .remove    = &vec_remove_   ##NAME,                                       \
+    .insert    = &vec_insert_   ##NAME,                                       \
 };                                                                            \
                                                                               \
 vec_##NAME* vec_new_##NAME()                                                  \
@@ -230,15 +235,37 @@ TYPE vec_remove_##NAME(vec_##NAME *v, size_t index)                           \
     assert((v->size + 1) < v->alloc);                                         \
                                                                               \
     TYPE old = v->data[index];                                                \
+                                                                              \
+    memmove(                                                                  \
+        &(v->data[index]),                                                    \
+        &(v->data[index + 1]),                                                \
+        (v->size - index - 1) * sizeof(v->data[0])                            \
+    );                                                                        \
+                                                                              \
     v->size -= 1;                                                             \
-                                                                              \
-    for(size_t i = index; i < v->size; i++) {                                 \
-        v->data[i] = v->data[i + 1];                                          \
-    }                                                                         \
-                                                                              \
     v->data[v->size] = ((TYPE) 0);                                            \
                                                                               \
     return old;                                                               \
+}                                                                             \
+                                                                              \
+void vec_insert_##NAME(vec_##NAME *v, size_t index, TYPE elem)                \
+{                                                                             \
+    assert(v);                                                                \
+    vec_grow_1##NAME(v);                                                      \
+                                                                              \
+    if(index > v->size) {                                                     \
+        assert(0 && "IOOB");                                                  \
+    }                                                                         \
+                                                                              \
+    memmove(                                                                  \
+        &(v->data[index + 1]),                                                \
+        &(v->data[index]),                                                    \
+        (v->size - index) * sizeof(v->data[0])                                \
+    );                                                                        \
+                                                                              \
+    v->data[index] = elem;                                                    \
+    v->size += 1;                                                             \
+    v->data[v->size] = ((TYPE) 0);                                            \
 }
 
 #define vec(name) vec_##name
@@ -254,6 +281,7 @@ TYPE vec_remove_##NAME(vec_##NAME *v, size_t index)                           \
 #define vec_index_of(container, elem, cmp) (container)->functions->index_of(container, elem, cmp)
 #define vec_contains(container, elem, cmp) (container)->functions->contains(container, elem, cmp)
 #define vec_remove(container, index) (container)->functions->remove(container, index)
+#define vec_insert(container, index, elem) (container)->functions->insert(container, index, elem)
 
 #define vec_foreach(v, elem) \
     for( size_t i = 0; i < vec_size(v) && ((elem = vec_get(v, i)), 1u); i++ )

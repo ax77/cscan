@@ -106,3 +106,23 @@ void test_vec4()
     }
 }
 
+void test_vec5() {
+    vec(u32) v = VEC_INIT(u32);
+
+    vec_insert(&v, 0, 32);
+    assert_true(vec_get(&v, 0) == 32);
+    assert_true(vec_size(&v) == 1);
+
+    vec_insert(&v, 0, 64);
+    assert_true(vec_get(&v, 0) == 64);
+    assert_true(vec_get(&v, 1) == 32);
+    assert_true(vec_size(&v) == 2);
+
+    //64,128,32
+    vec_insert(&v, 1, 128);
+    assert_true(vec_get(&v, 0) == 64);
+    assert_true(vec_get(&v, 1) == 128);
+    assert_true(vec_get(&v, 2) == 32);
+    assert_true(vec_size(&v) == 3);
+}
+
