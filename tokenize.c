@@ -541,6 +541,7 @@ int main(int argc, char **argv)
     test_vec3();
     test_vec4();
     test_vec5();
+    test_vec7();
 
     printf("\n:ok:\n");
     return 0;

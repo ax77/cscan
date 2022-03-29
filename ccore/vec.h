@@ -36,14 +36,24 @@ size_t       vec_size_      ##NAME   (vec_##NAME *v);                         \
 int          vec_is_empty_  ##NAME   (vec_##NAME *v);                         \
 void         vec_add_all_   ##NAME   (vec_##NAME *dst, vec_##NAME *src);      \
 void         vec_reset_     ##NAME   (vec_##NAME *v);                         \
-TYPE         vec_remove_    ##NAME   (vec_##NAME *v, size_t index);           \
-void         vec_insert_    ##NAME   (vec_##NAME *v, size_t index, TYPE e);   \
                                                                               \
 ptrdiff_t                                                                     \
 vec_index_of_##NAME(vec_##NAME *v, TYPE elem, int (*cmp)(TYPE, TYPE));        \
                                                                               \
 int                                                                           \
 vec_contains_##NAME(vec_##NAME *v, TYPE elem, int (*cmp)(TYPE, TYPE));        \
+                                                                              \
+TYPE                                                                          \
+vec_remove_##NAME(vec_##NAME *v, size_t index);                               \
+                                                                              \
+void                                                                          \
+vec_insert_##NAME(vec_##NAME *v, size_t index, TYPE e);                       \
+                                                                              \
+void                                                                          \
+vec_clear_##NAME(vec_##NAME *v);                                              \
+                                                                              \
+void                                                                          \
+vec_sort_##NAME(vec_##NAME *v, int(*sort_fn)(const void *, const void *));    \
                                                                               \
 struct vec_functions_##NAME {                                                 \
     void   (*push_back) (vec_##NAME *v, TYPE p);                              \
@@ -66,6 +76,12 @@ struct vec_functions_##NAME {                                                 \
                                                                               \
     void                                                                      \
     (*insert)(vec_##NAME *v, size_t index, TYPE e);                           \
+                                                                              \
+    void                                                                      \
+    (*clear)(vec_##NAME *v);                                                  \
+                                                                              \
+    void                                                                      \
+    (*sort)(vec_##NAME *v, int(*fn)(const void *, const void *));             \
 };
 
 #define vec_impl(TYPE, NAME)                                                  \
@@ -83,6 +99,8 @@ struct vec_functions_##NAME vec_functions_impl_##NAME = {                     \
     .contains  = &vec_contains_ ##NAME,                                       \
     .remove    = &vec_remove_   ##NAME,                                       \
     .insert    = &vec_insert_   ##NAME,                                       \
+    .clear     = &vec_clear_    ##NAME,                                       \
+    .sort      = &vec_sort_     ##NAME,                                       \
 };                                                                            \
                                                                               \
 vec_##NAME* vec_new_##NAME()                                                  \
@@ -266,6 +284,29 @@ void vec_insert_##NAME(vec_##NAME *v, size_t index, TYPE elem)                \
     v->data[index] = elem;                                                    \
     v->size += 1;                                                             \
     v->data[v->size] = ((TYPE) 0);                                            \
+}                                                                             \
+                                                                              \
+void                                                                          \
+vec_clear_##NAME(vec_##NAME *v)                                               \
+{                                                                             \
+    assert(v);                                                                \
+    if(v->alloc == 0 || !v->data) {                                           \
+        return;                                                               \
+    }                                                                         \
+    for(size_t i = 0; i < v->size; i++) {                                     \
+        v->data[i] = ((TYPE) 0);                                              \
+    }                                                                         \
+    v->size = 0;                                                              \
+}                                                                             \
+                                                                              \
+void                                                                          \
+vec_sort_##NAME(vec_##NAME *v, int(*fn)(const void *, const void *))          \
+{                                                                             \
+    assert(v);                                                                \
+    if(v->alloc == 0 || !v->data) {                                           \
+        return;                                                               \
+    }                                                                         \
+    qsort(v->data, v->size, sizeof(v->data[0]), fn);                          \
 }
 
 #define vec(name) vec_##name
@@ -282,6 +323,8 @@ void vec_insert_##NAME(vec_##NAME *v, size_t index, TYPE elem)                \
 #define vec_contains(container, elem, cmp) (container)->functions->contains(container, elem, cmp)
 #define vec_remove(container, index) (container)->functions->remove(container, index)
 #define vec_insert(container, index, elem) (container)->functions->insert(container, index, elem)
+#define vec_clear(container) (container)->functions->clear(container)
+#define vec_sort(container, fn) (container)->functions->sort(container, fn)
 
 #define vec_foreach(v, elem) \
     for( size_t i = 0; i < vec_size(v) && ((elem = vec_get(v, i)), 1u); i++ )

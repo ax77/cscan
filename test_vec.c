@@ -106,7 +106,20 @@ void test_vec4()
     }
 }
 
-void test_vec5() {
+static int i32_cmpfunc(const void *a, const void *b)
+{
+    return (*(int*) a - *(int*) b);
+}
+
+static int char_ptr_cmpfunc(const void *str1, const void *str2)
+{
+    char *const*pp1 = str1;
+    char *const*pp2 = str2;
+    return strcmp(*pp1, *pp2);
+}
+
+void test_vec5()
+{
     vec(u32) v = VEC_INIT(u32);
 
     vec_insert(&v, 0, 32);
@@ -124,5 +137,39 @@ void test_vec5() {
     assert_true(vec_get(&v, 1) == 128);
     assert_true(vec_get(&v, 2) == 32);
     assert_true(vec_size(&v) == 3);
+
+    vec_sort(&v, &i32_cmpfunc);
+    assert_true(vec_get(&v, 0) == 32);
+    assert_true(vec_get(&v, 1) == 64);
+    assert_true(vec_get(&v, 2) == 128);
+    assert_true(vec_size(&v) == 3);
+
+    vec_clear(&v);
+    assert_true(vec_size(&v) == 0);
+}
+
+void test_vec7()
+{
+    vec(str) v = VEC_INIT(str);
+    vec_push_back(&v, "100");
+    vec_push_back(&v, "010");
+    vec_push_back(&v, "011");
+    vec_push_back(&v, "001");
+    vec_push_back(&v, "000");
+    vec_push_back(&v, "101");
+    vec_push_back(&v, "111");
+    vec_push_back(&v, "110");
+
+    vec_sort(&v, &char_ptr_cmpfunc);
+    assert_true(vec_size(&v) == 8);
+    assert_true(xxx_streq("000", vec_get(&v,0)));
+    assert_true(xxx_streq("001", vec_get(&v,1)));
+    assert_true(xxx_streq("010", vec_get(&v,2)));
+    assert_true(xxx_streq("011", vec_get(&v,3)));
+    assert_true(xxx_streq("100", vec_get(&v,4)));
+    assert_true(xxx_streq("101", vec_get(&v,5)));
+    assert_true(xxx_streq("110", vec_get(&v,6)));
+    assert_true(xxx_streq("111", vec_get(&v,7)));
+
 }
 
