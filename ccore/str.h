@@ -34,5 +34,8 @@ int sb_is_empty(Str *buf);
 int sb_peek_last(Str *buf);
 int sb_char_at(Str *buf, size_t index);
 
+ptrdiff_t sb_find(char *s, char *p);
+vec(str) *sb_split_str(char *input, char *sep, int include_empty);
+
 #endif /* STR_H_ */
 

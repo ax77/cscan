@@ -422,3 +422,66 @@ int sb_peek_last(Str *buf)
     return vec_get(buf, buf->size - 1);
 }
 
+ptrdiff_t sb_find(char *s, char *p)
+{
+    assert(s);
+    assert(p);
+    char *r = strstr(s, p);
+    if (r == NULL) {
+        return -1;
+    }
+    return r - s;
+}
+
+static void split_push(vec(str) *rv, char *tmp, int include_empty)
+{
+    size_t len = strlen(tmp);
+    if (len > 0 || (len == 0 && include_empty)) {
+        vec_push_back(rv, tmp);
+    }
+}
+
+vec(str)* sb_split_str(char *input, char *sep, int include_empty)
+{
+    assert(input);
+    assert(sep);
+
+    char *tmp = input;
+    size_t seplen = strlen(sep);
+    size_t inplen = strlen(input);
+
+    vec(str) *rv = vec_new(str);
+    ptrdiff_t pos = sb_find(tmp, sep);
+
+    while (pos > 0) {
+        char *sub = sb_left(tmp, pos);
+        split_push(rv, sub, include_empty);
+
+        tmp = sb_mid(tmp, pos + seplen, inplen);
+        pos = sb_find(tmp, sep);
+    }
+
+    split_push(rv, tmp, include_empty);
+    return rv;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -543,6 +543,20 @@ int main(int argc, char **argv)
     test_vec5();
     test_vec7();
 
+    vec(str) *spl = sb_split_str("a xxx b xxx c xxx d xxx e xxx f xxx",
+            "xxx", 1);
+    char *tmp = NULL;
+    vec_foreach(spl, tmp)
+    {
+        printf("[%s]\n", tmp);
+    }
+
+    spl = sb_split_str("a\r\nb\r\nc\r\n", "\r\n", 1);
+    vec_foreach(spl, tmp)
+    {
+        printf("[%s]\n", tmp);
+    }
+
     printf("\n:ok:\n");
     return 0;
 }
