@@ -433,10 +433,23 @@ ptrdiff_t sb_find(char *s, char *p)
     return r - s;
 }
 
+static int sb_is_empty_str(char *s)
+{
+    assert(s);
+    size_t len = strlen(s);
+    for (size_t i = 0; i < len; i++) {
+        char c = s[i];
+        if (c > ' ') {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 static void split_push(vec(str) *rv, char *tmp, int include_empty)
 {
-    size_t len = strlen(tmp);
-    if (len > 0 || (len == 0 && include_empty)) {
+    int empty = sb_is_empty_str(tmp);
+    if (!empty || (empty && include_empty)) {
         vec_push_back(rv, tmp);
     }
 }
@@ -453,11 +466,11 @@ vec(str)* sb_split_str(char *input, char *sep, int include_empty)
     vec(str) *rv = vec_new(str);
     ptrdiff_t pos = sb_find(tmp, sep);
 
-    while (pos > 0) {
+    while (pos >= 0) {
         char *sub = sb_left(tmp, pos);
         split_push(rv, sub, include_empty);
 
-        tmp = sb_mid(tmp, pos + seplen, inplen);
+        tmp = sb_mid(tmp, pos + seplen, strlen(tmp));
         pos = sb_find(tmp, sep);
     }
 
