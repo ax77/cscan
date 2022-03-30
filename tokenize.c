@@ -4,8 +4,8 @@
 typedef struct Context {
     char *filename;
     CharBuf *buffer;
-    HashMap *ident_hash;
-    HashMap *operators;
+    map(idents) *ident_hash;
+    map(operators) *operators;
     vec(token) *tokenlist;
 } Context;
 
@@ -32,13 +32,13 @@ static Token* ctx_make_token(Context *ctx, T type, char *value);
 
 static Ident* ctx_make_ident(Context *ctx, char *name)
 {
-    Ident *id = HashMap_get(ctx->ident_hash, name);
-    if (id) {
-        return id;
+    map_result(idents) opt = map_get(ctx->ident_hash, name);
+    if (opt.found) {
+        return opt.value;
     }
     Ident *newid = cc_malloc(sizeof(struct Ident));
     newid->name = cc_strdup(name);
-    HashMap_put(ctx->ident_hash, name, newid);
+    map_put(ctx->ident_hash, name, newid);
     return newid;
 }
 
@@ -228,40 +228,36 @@ Token* nex2(Context *ctx)
         char buf2[] = { c1, c2, '\0' };
         char buf1[] = { c1, '\0' };
 
-        void *type4 = HashMap_get(ctx->operators, buf4);
-        void *type3 = HashMap_get(ctx->operators, buf3);
-        void *type2 = HashMap_get(ctx->operators, buf2);
-        void *type1 = HashMap_get(ctx->operators, buf1);
+        map_result(operators) type4 = map_get(ctx->operators, buf4);
+        map_result(operators) type3 = map_get(ctx->operators, buf3);
+        map_result(operators) type2 = map_get(ctx->operators, buf2);
+        map_result(operators) type1 = map_get(ctx->operators, buf1);
 
-        if (type4 != NULL) {
+        if (type4.found) {
             charbuf_nextc(buf);
             charbuf_nextc(buf);
             charbuf_nextc(buf);
             charbuf_nextc(buf);
 
-            int *type4en = ((int*) type4);
-            return ctx_make_token(ctx, *type4en, buf4);
+            return ctx_make_token(ctx, type4.value, buf4);
         }
-        if (type3 != NULL) {
+        if (type3.found) {
             charbuf_nextc(buf);
             charbuf_nextc(buf);
             charbuf_nextc(buf);
 
-            int *type3en = ((int*) type3);
-            return ctx_make_token(ctx, *type3en, buf3);
+            return ctx_make_token(ctx, type3.value, buf3);
         }
-        if (type2 != NULL) {
+        if (type2.found) {
             charbuf_nextc(buf);
             charbuf_nextc(buf);
 
-            int *type2en = ((int*) type2);
-            return ctx_make_token(ctx, *type2en, buf2);
+            return ctx_make_token(ctx, type2.value, buf2);
         }
-        if (type1 != NULL) {
+        if (type1.found) {
             charbuf_nextc(buf);
 
-            int *type1en = ((int*) type1);
-            return ctx_make_token(ctx, *type1en, buf1);
+            return ctx_make_token(ctx, type1.value, buf1);
         }
 
         cc_fatal("Unrecognized operator sequence: [%s]\n", buf4);
@@ -275,11 +271,10 @@ Token* nex2(Context *ctx)
     }
 
     char otherascii[] = { c1, '\0' };
-    void *perhaps = HashMap_get(ctx->operators, otherascii);
-    if (perhaps) {
+    map_result(operators) perhaps = map_get(ctx->operators, otherascii);
+    if (perhaps.found) {
         charbuf_nextc(buf); // XXX
-        int *type2en = ((int*) perhaps);
-        return ctx_make_token(ctx, *type2en, otherascii);
+        return ctx_make_token(ctx, perhaps.value, otherascii);
     }
 
     charbuf_nextc(buf); // XXX

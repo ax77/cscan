@@ -98,8 +98,11 @@ PpSym* sym_new(Token *macid, vec(token) *repl);
 #define NS_GNU (1u << 6u)
 #define NS_CPP (NS_IDN)
 
-HashMap* make_ops_map();
-HashMap* make_idents_map();
+map_proto(char*, Ident*, idents);
+map_proto(char*, int, operators);
+
+map(operators)* make_ops_map();
+map(idents)* make_idents_map();
 char* toktype_tos(T t);
 
 // Identifiers

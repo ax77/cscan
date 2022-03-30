@@ -114,34 +114,12 @@ void token_simple_print(struct token_simple *elem, char *val)
 
 void test_hashmap_pointers_1()
 {
-    HashMap *map = HashMap_new(&token_simple_hash, &token_simple_equal);
 
-    struct token_simple *a1 = token_simple_new("a", 0, 1);
-
-    HashMap_put(map, a1, "a1");
-    HashMap_put(map, a1, "a2");
-    HashMap_put(map, a1, "a3");
-
-    char *res = (char*) HashMap_get(map, a1);
-    assert_true(res);
-    assert_true(streq(res, "a3"));
 }
 
 void test_hashmap_str_1()
 {
-    HashMap *map = HashMap_new_str();
-    HashMap_put(map, "1", "1");
-    HashMap_put(map, "2", "2");
-    HashMap_put(map, "3", "3");
 
-    assert_true(HashMap_size(map) == 3);
-    assert_true(streq(HashMap_get(map, "1"), "1"));
-    assert_true(streq(HashMap_get(map, "2"), "2"));
-    assert_true(streq(HashMap_get(map, "3"), "3"));
-
-    HashMap_put(map, "1", "0");
-    assert_true(HashMap_size(map) == 3);
-    assert_true(streq(HashMap_get(map, "1"), "0"));
 }
 
 void test_str_pop()

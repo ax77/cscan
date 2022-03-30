@@ -2,6 +2,9 @@
 
 vec_impl(struct Token*, token);
 
+map_impl(char*, Ident*, idents);
+map_impl(char*, int, operators);
+
 Token *EOF_TOKEN_ENTRY = &(Token ) { .type = TOKEN_EOF, .value = "eof" };
 
 Token* token_new(T type, char *value)
@@ -40,29 +43,23 @@ PpSym* sym_new(Token *macid, vec(token) *repl)
 #define kw(n, namespc) Ident * n##_ident = &(Ident) { .name = STR(n), .ns = namespc, .sym = NULL };
 #include "ops"
 
-static int* g(int en)
-{
-    int *r = cc_malloc(sizeof(int));
-    *r = en;
-    return r;
-}
 
-HashMap* make_ops_map()
+map(operators)* make_ops_map()
 {
-    HashMap *m = HashMap_new_str();
+    map(operators) *m = map_new(operators, &hashmap_hash_str, &hashmap_equal_str);
 
-#   define op_digr(op, en) HashMap_put(m, op, g(en));
-#   define op(op, en) HashMap_put(m, op, g(en));
+#   define op_digr(op, en) map_put(m, op, en);
+#   define op(op, en) map_put(m, op, en);
 #   include "ops"
 
     return m;
 }
 
-HashMap* make_idents_map()
+map(idents)* make_idents_map()
 {
-    HashMap *m = HashMap_new_str();
+    map(idents) *m = map_new(idents, &hashmap_hash_str, &hashmap_equal_str);
 
-#   define kw(n, namespc) HashMap_put(m, STR(n), n##_ident);
+#   define kw(n, namespc) map_put(m, STR(n), n##_ident);
 #   include "ops"
 
     return m;
