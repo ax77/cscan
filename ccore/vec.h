@@ -327,10 +327,10 @@ vec_sort_##NAME(vec_##NAME *v, int(*fn)(const void *, const void *))          \
 #define vec_sort(container, fn) (container)->functions->sort(container, fn)
 
 #define vec_foreach(v, elem) \
-    for( size_t i = 0; i < vec_size(v) && ((elem = vec_get(v, i)), 1u); i++ )
+    for( size_t __i__ = 0; __i__ < vec_size(v) && ((elem = vec_get(v, __i__)), 1u); __i__++ )
 
 #define vec_foreach_rev(v, elem) \
-    for( ptrdiff_t i = vec_size(v); (--i >= 0) && ((elem = vec_get(v, i)), 1u); )
+    for( ptrdiff_t __i__ = vec_size(v); (--__i__ >= 0) && ((elem = vec_get(v, __i__)), 1u); )
 
 vec_proto(char, i8)
 vec_proto(unsigned char, u8)

@@ -82,6 +82,57 @@ static Token* parse_ident_token(Context *ctx)
     return tok;
 }
 
+static Token* parse_pp_number(Context *ctx)
+{
+
+    CharBuf *buf = ctx->buffer;
+
+    /*
+     * pp-number:
+     *   digit
+     *   . digit
+     *   pp-number digit
+     *   pp-number identifier-nondigit
+     *   pp-number e sign
+     *   pp-number E sign
+     *   pp-number .
+     *   pp-number ' digit
+     *   pp-number ' nondigit
+     */
+
+    Str strbuf = STR_INIT;
+    sb_addc(&strbuf, charbuf_nextc(buf));
+
+    for (;;) {
+        int *chars = charbuf_next4(buf);
+        int c1 = chars[0];
+        int c2 = chars[1];
+
+        if (is_dec(c1) || is_letter(c1) || c1 == '.') {
+            sb_addc(&strbuf, charbuf_nextc(buf));
+            continue;
+        }
+
+        if (c1 == 'e' || c1 == 'E' || c1 == 'p' || c1 == 'P') {
+            sb_addc(&strbuf, charbuf_nextc(buf));
+            if (c2 == '-' || c2 == '+') {
+                sb_addc(&strbuf, charbuf_nextc(buf));
+            }
+            continue;
+        }
+
+        if (c1 == '\'' && (is_dec(c2) || is_letter(c2))) {
+            charbuf_nextc(buf); // just skip this tick
+            continue;
+        }
+
+        break;
+    }
+
+    return ctx_make_token(ctx, TOKEN_NUMBER, strbuf.data);
+
+}
+
 static Token* parse_string_token(Context *ctx, enum string_encoding enc)
 {
     CharBuf *buffer = ctx->buffer;
@@ -184,42 +235,7 @@ Token* nex2(Context *ctx)
     }
 
     if (is_dec(c1) || (c1 == '.' && is_dec(c2))) {
-        /*
-         * pp-number:
-         *   digit
-         *   . digit
-         *   pp-number digit
-         *   pp-number identifier-nondigit
-         *   pp-number e sign
-         *   pp-number E sign
-         *   pp-number .
-         */
-
-        Str strbuf = STR_INIT;
-        sb_addc(&strbuf, charbuf_nextc(buf));
-
-        for (;;) {
-            int peek = charbuf_peekc(buf);
-            if (is_dec(peek)) {
-                sb_addc(&strbuf, charbuf_nextc(buf));
-                continue;
-            } else if (peek == 'e' || peek == 'E' || peek == 'p'
-                    || peek == 'P') {
-                sb_addc(&strbuf, charbuf_nextc(buf));
-
-                peek = charbuf_peekc(buf);
-                if (peek == '-' || peek == '+') {
-                    sb_addc(&strbuf, charbuf_nextc(buf));
-                }
-                continue;
-            } else if (peek == '.' || is_letter(peek)) {
-                sb_addc(&strbuf, charbuf_nextc(buf));
-                continue;
-            }
-
-            break;
-        }
-        return ctx_make_token(ctx, TOKEN_NUMBER, strbuf.data);
+        return parse_pp_number(ctx);
     }
 
     if (is_op_start(c1)) {
@@ -515,35 +531,11 @@ int main(int argc, char **argv)
 {
     Context *ctx = make_context("input.txt");
     vec(token) *tokens = tokenize(ctx);
-    Scan *s = scan_new(tokens);
-    for (;;) {
-        Token *t = scan_get(s);
-        if (t->type == TOKEN_EOF) {
-            break;
-        }
-        if (t->fposition & fleadws) {
-            printf("%s", " ");
-        }
-        printf("%s", t->value);
-        if (t->fposition & fnewline) {
-            printf("%s", "\n");
-        }
-    }
 
-    test_vec0();
-    test_vec1();
-    test_vec2();
-    test_vec3();
-    test_vec4();
-    test_vec5();
-    test_vec7();
-
-    vec(str) *spl = sb_split_str("a.b.c.d.e.f.", ".", 1);
-    char *tmp = NULL;
-    int line = 1;
-    vec_foreach(spl, tmp)
+    Token *t = NULL;
+    vec_foreach(tokens, t)
     {
-        printf("%3d [%s]\n", line++, tmp);
+        printf("%3lu [%s]\n", __i__, t->value);
     }
 
     printf("\n:ok:\n");
